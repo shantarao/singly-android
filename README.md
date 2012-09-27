@@ -8,9 +8,9 @@ The Singly Android client is a library supporting the [Singly](https://singly.co
   - Make requests to the Singly API to retrieve your users' social data for use in your app
 
 
-The library code is contained in the SinglySDK project.  The com.singly.sdk.SinglyClient class is the entry point to using the Singly API in your Android project.
+The library code is contained in the SinglyAndroidSDK project in the sdk folder.  The com.singly.android.sdk.SinglyClient class is the entry point to using the Singly API in your Android project.
 
-Sample implementations are contained in the Singly Android Example project.  The com.singly.android_example.MainActivity and ProfilesActivity show usage of the SinglyClient class to authenticate and perform API calls.
+Sample implementations are contained in the SinglyAndroidExamples project in the examples.  The com.singly.android.examples.MainActivity and ProfilesActivity show usage of the SinglyClient class to authenticate and perform API calls.
 
 ## Registering Your Singly App
 
@@ -67,7 +67,7 @@ To access the Singly API your user must first authenticate with one or more serv
 ### Retrieve User Social Data
 Once a user has authenticated with a service you will be able to make api calls to the Singly API to retrieve the user's social data.  This is done throught the `apiCall` method of the `SinglyClient` class.  To make an api call you provide the api path and any api parameters.  Access token is not required as it will be appended to any api calls made through the client.  All api calls are performed asynchronously.  An `APICallListener` class is provided to callback on the success or error of the call.  Upon success the JSONObject reprsenting the api response is returned to the listener.  This data can then be used within your Android app.
     
-    api.apiCall("/profiles", apiParams, new APICallListener() {
+    api.apiCall("/profiles", "GET", apiParams, rawBody, new APICallListener() {
 
       public void onSuccess(JSONObject jsonObj) {
         // api call success, profiles returned as JSONObject, do something
