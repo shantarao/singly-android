@@ -1,4 +1,4 @@
-package com.singly.sdk;
+package com.singly.android.sdk;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -9,6 +9,7 @@ import java.util.Map;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URIUtils;
 import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONObject;
 
@@ -22,8 +23,8 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
 
-import com.singly.util.JSON;
-import com.singly.util.SinglyHttpClient;
+import com.singly.android.util.JSON;
+import com.singly.android.util.SinglyHttpClient;
 
 /**
  * A client that handles all authentication with various services through Singly
@@ -170,7 +171,7 @@ public class SinglyClient {
       callback.onError(AuthorizedListener.Errors.NO_NETWORK_PERMISSIONS);
       return;
     }
-    
+
     // fail early if no internet access
     if (!isConnectedToInternet()) {
       callback.onError(AuthorizedListener.Errors.NO_INTERNET_ACCESS);
@@ -283,13 +284,19 @@ public class SinglyClient {
   }
 
   /**
-   * Performs an api call to the Singly API.
+   * Performs a Singly api call.
    * 
    * The {@link #authorize(String, AuthorizedListener)} method muse have been
    * called for at least one service before any api calls are made.  Once 
    * authorized the application stores an access token used to call the 
    * Singly api.  That access token is then appended to any api calls made
    * through this method.
+   * 
+   * Both GET and POST requests can be performed by specifying the method.  A
+   * raw body content, presumably JSON, can also be included.  Any raw body
+   * content be ignored if the method is not specified as POST.  If both raw 
+   * body content and input parameters are specified, the parameters will be
+   * appended to the api call url.  If a method is not specified, GET is used.
    * 
    * This method performs the api call in an asynchronous method and returns
    * any response as a JSONObject to the APICallListener callback.  To perform
@@ -299,6 +306,9 @@ public class SinglyClient {
    * methods.
    * 
    * @param endpoint The singly api call to make.
+   * @param method The HTTP method, either GET or POST.
+   * @param rawBody A raw body content to be posted to the API.  The method
+   * must be set to POST or any raw body content is ignored.
    * @param parameters The api call parameters.  You do not need to include
    * the access token, that will be automatically appended.
    * @param callback The listener class used to callback on success or error
@@ -306,49 +316,85 @@ public class SinglyClient {
    * 
    * @see https://singly.com/docs/api For documentation on Singly api calls.
    */
-  public void apiCall(final String endpoint,
-    final Map<String, String> parameters, final APICallListener callback) {
+  public void apiCall(final String endpoint, final String method,
+    final Map<String, String> parameters, final String rawBody,
+    final APICallListener callback) {
 
     // fail early if no permissions
     if (!hasNetworkPermissions()) {
-      callback.onError("This application doesn't have permissions to acces" +
-      		"the internet or network state.");
+      callback.onError("This application doesn't have permissions to access"
+        + " the internet or network state.");
       return;
     }
-    
+
     // fail early if no internet access
     if (!isConnectedToInternet()) {
       callback.onError("The application cannot connect to the internet.");
       return;
     }
-    
+
+    // fail early for no access token
+    String accessToken = prefs.getString("accessToken", null);
+    if (accessToken == null) {
+      callback.onError("The application must be authorized with at least one"
+        + " service to make api calls.");
+      return;
+    }
+
+    // are we doing a GET, a POST, or a POST with raw body content
+    final boolean isGet = method == null || method.equalsIgnoreCase("GET");
+    final boolean isPost = method != null && method.equalsIgnoreCase("POST");
+    final boolean isRawPost = isPost && rawBody != null;
+
+    // add the access token to the parameters for every api call
+    List<NameValuePair> qparams = new ArrayList<NameValuePair>();
+    qparams.add(new BasicNameValuePair("access_token", accessToken));
+
+    // convert input params to name value pairs
+    List<NameValuePair> iparams = new ArrayList<NameValuePair>();
+    if (parameters != null) {
+      for (Map.Entry<String, String> entry : parameters.entrySet()) {
+        iparams.add(new BasicNameValuePair(entry.getKey(), entry.getValue()));
+      }
+    }
+
+    // get methods and post methods that are posting a raw body get all 
+    // parameters in the url
+    if ((isGet || isRawPost) && iparams.size() > 0) {
+      qparams.addAll(iparams);
+    }
+
+    // create the endpoint url and post params if method is post
+    final String apiCallUrl = createURL(endpoint, qparams);
+    final List<NameValuePair> postParams = isPost ? iparams : null;
+
     AsyncTask apiCallTask = new AsyncTask<Object, Integer, JSONObject>() {
 
       @Override
       protected JSONObject doInBackground(Object... params) {
 
-        // convert the query parameters to name value pairs
-        List<NameValuePair> qparams = new ArrayList<NameValuePair>();
-        if (parameters != null) {
-          for (Map.Entry<String, String> entry : parameters.entrySet()) {
-            BasicNameValuePair nameVal = new BasicNameValuePair(entry.getKey(),
-              entry.getValue());
-            qparams.add(nameVal);
-          }
-        }
-
-        // add the access token to the parameters for every api call
-        qparams.add(new BasicNameValuePair("access_token", prefs.getString(
-          "accessToken", "")));
-
         try {
 
-          // create the endpoint url
-          String apiCallUrl = createURL(endpoint, qparams);
-
-          // perform the request to the api
+          // perform a call to the api either as a get, post, or post with
+          // body content
           Log.d(TAG, "API call to: " + apiCallUrl);
-          byte[] responseBytes = httpClient.get(apiCallUrl);
+          byte[] responseBytes = null;
+          if (isGet) {
+            responseBytes = httpClient.get(apiCallUrl);
+          }
+          else if (isPost && rawBody == null) {
+            responseBytes = httpClient.post(apiCallUrl, postParams);
+          }
+          else if (isPost && rawBody != null) {
+            StringEntity jsonBody = new StringEntity(rawBody);
+            responseBytes = httpClient.postAsBody(apiCallUrl, jsonBody);
+          }
+          
+          // no response bytes is an error
+          if (responseBytes == null) {
+            Log.e(TAG, "Api call returned 0 bytes:" + endpoint);
+            return null;
+          }
 
           // pare and return the JSON response
           String response = new String(responseBytes);

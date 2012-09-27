@@ -1,4 +1,4 @@
-package com.singly.sdk;
+package com.singly.android.sdk;
 
 import android.app.Dialog;
 import android.content.Context;
@@ -25,7 +25,7 @@ import android.widget.LinearLayout;
 class AuthDialog
   extends Dialog {
 
-  static final FrameLayout.LayoutParams FILL = new FrameLayout.LayoutParams(
+  private static final FrameLayout.LayoutParams FILL = new FrameLayout.LayoutParams(
     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
 
   private String authUrl;
@@ -80,14 +80,14 @@ class AuthDialog
 
     @Override
     public boolean shouldOverrideUrlLoading(WebView view, String url) {
-      
+
       // on successful authentication we should get the redirect url
       if (url.startsWith(SinglyClient.AUTH_REDIRECT)) {
         dialogListener.onAuthorized(url);
         AuthDialog.this.dismiss();
         return true;
       }
-      
+
       // not successful authentication
       return false;
     }
@@ -95,7 +95,7 @@ class AuthDialog
     @Override
     public void onReceivedError(WebView view, int errorCode,
       String description, String failingUrl) {
-      
+
       // dismiss the dialog on error
       super.onReceivedError(view, errorCode, description, failingUrl);
       dialogListener.onError();
@@ -104,7 +104,7 @@ class AuthDialog
 
     @Override
     public void onPageFinished(WebView view, String url) {
-      
+
       // don't show the web view until the authentication page loaded
       super.onPageFinished(view, url);
       dialogListener.onPageLoaded();

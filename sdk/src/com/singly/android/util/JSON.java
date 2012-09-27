@@ -1,4 +1,4 @@
-package com.singly.util;
+package com.singly.android.util;
 
 import java.util.ArrayList;
 import java.util.Iterator;

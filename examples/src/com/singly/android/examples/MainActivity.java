@@ -1,4 +1,4 @@
-package com.singly.android_example;
+package com.singly.android.examples;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
@@ -9,8 +9,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
-import com.singly.sdk.AuthorizedListener;
-import com.singly.sdk.SinglyClient;
+import com.singly.android.sdk.AuthorizedListener;
+import com.singly.android.sdk.SinglyClient;
 
 public class MainActivity
   extends Activity {
@@ -24,7 +24,7 @@ public class MainActivity
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
     final SinglyClient api = new SinglyClient(activity,
-      "your_client_id", 
+      "your_client_id",
       "your_client_secret");
 
     final Intent profilesIntent = new Intent(MainActivity.this,

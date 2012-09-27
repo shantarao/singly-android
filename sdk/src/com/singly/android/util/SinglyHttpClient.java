@@ -1,4 +1,4 @@
-package com.singly.util;
+package com.singly.android.util;
 
 import java.io.UnsupportedEncodingException;
 import java.util.List;

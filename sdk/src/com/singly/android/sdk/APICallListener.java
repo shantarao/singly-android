@@ -1,4 +1,4 @@
-package com.singly.sdk;
+package com.singly.android.sdk;
 
 import org.json.JSONObject;
 

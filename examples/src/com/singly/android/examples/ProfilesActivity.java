@@ -1,4 +1,4 @@
-package com.singly.android_example;
+package com.singly.android.examples;
 
 import java.util.Iterator;
 
@@ -9,8 +9,8 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.widget.TextView;
 
-import com.singly.sdk.APICallListener;
-import com.singly.sdk.SinglyClient;
+import com.singly.android.sdk.APICallListener;
+import com.singly.android.sdk.SinglyClient;
 
 public class ProfilesActivity
   extends Activity {
@@ -23,10 +23,10 @@ public class ProfilesActivity
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_profiles);
     final SinglyClient api = new SinglyClient(activity,
-      "your_client_id", 
+      "your_client_id",
       "your_client_secret");
 
-    api.apiCall("/profiles", null, new APICallListener() {
+    api.apiCall("/profiles", "GET", null, null, new APICallListener() {
 
       public void onSuccess(JSONObject jsonObj) {
         TextView t = (TextView)findViewById(R.id.profiles);

@@ -1,4 +1,4 @@
-package com.singly.sdk;
+package com.singly.android.sdk;
 
 /**
  * A callback interface for the different authorization states that occur when
