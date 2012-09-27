@@ -1,33 +1,84 @@
-Singly Android Example
-=========
+# Singly Android Client
 
-Contained within this simple Android example is a library supporting the [Singly](https://singly.com) social API that will let you
+This repository contains two different Android projects.  The first is the Singly Android client library.  This is a library project you can include into your Android apps that makes it easy to use the Singly API.  The second in an example Android project that show useage of the Singly client.
 
-  - easily authenticate with any service supported by Singly
-  - make requests (GET and POST) to the Singly endpoints to get your users' social data for use in your app
+The Singly Android client is a library supporting the [Singly](https://singly.com) social API that will let you
+
+  - Allow users to easily authenticate with any service supported by Singly; for example Facebook, Twitter, Github, Foursquare and others
+  - Make requests to the Singly API to retrieve your users' social data for use in your app
 
 
-The library code is contained in Singly.java and AuthDialog.java.
+The library code is contained in the SinglySDK project.  The com.singly.sdk.SinglyClient class is the entry point to using the Singly API in your Android project.
 
-Sample implementations are contained in MainActivity.java (authentication) and ProfilesActivity.java (GET request).
+Sample implementations are contained in the Singly Android Example project.  The com.singly.android_example.MainActivity and ProfilesActivity show usage of the SinglyClient class to authenticate and perform API calls.
 
-**Important:** In order for the example to work, go to https://singly.com, register or login, create an app, and copy and paste your `CLIENT_ID` and `CLIENT_SECRET` into the `Singly()` constructor at the top of MainActivity and ProfilesActivity.java 
+## Registering Your Singly App
 
-Available methods
------------
-Once you have instatiated `Singly(activity, CLIENT_ID, CLIENT_SECRET)`, call `authorize()` as defined below to obtain an access to the *request* methods.
+In order to use the Android client you will need to do the following:
 
-* `Singly(activity, CLIENT_ID, CLIENT_SECRET)` constructor
-* `authorize(activity, "facebook", DialogListener())` replace the string "facebook" with [any service Singly supports](https://singly.com/docs). Your user will be shown the service's login/authorization screen and then returned to your application. DialogListener is a Singly.DialogListener that implements onComplete(String access_token) when the authorization is complete.
+1. Go to https://singly.com and register or login.
+2. Create your app or use the default app.
+3. Get the client id and client secret for your app.  
+4. If using the examples, copy and past the client id and client secret into the SinglyClient constructor at the top of the MainActivity and ProfilesActivity classes in the Singly Android Example project.
+5. If creating your own Andorid app, use the client id and client secret in the SinglyClient constructor.
 
-    `api.authorize(activity, "facebook", new DialogListener() {
-        public void onComplete(String token) {
-            //Do Something
-        }
-     });`
 
-* `JSONObject get(String endpoint, String params)` returns a JSONObject of the data Singly returns at that endpoint. It can be filtered wuth the URL Encoded string params as specified on [API Overview](https://singly.com/docs/api)
-* `String request(String method, String endpoint, String params, ArrayList<NameValuePair> HTTPHeaders)` a raw HTTP request to the specified Singly endpoint. This can be used, for example, for [sharing a status](https://singly.com/docs/sharing) to all of the authorized services,
+## Using the Android Client
+
+### Instantiating the SinglyClient
+The first step is creating the client class as shown below.  This assume you have gone through the registration process and have obtained your clientId and clientSecret. 
+
+    SinglyClient api = new SinglyClient(context,
+      "your_client_id", 
+      "your_client_secret");
+
+Note: The context is the Android `Context` that the SinglyClient is currently bound too.  This is used to bind any authentication Dialog that may be launched.  This can either be the current activity which is using the SinglyClient or the global Application context.
+
+### Authenticate the User
+To access the Singly API your user must first authenticate with one or more services that Singly supports.  This is done through the `authorize()` method of the SinglyClient class.  The authorize method will launch a WebView Dialog to authenticate the user with the service.  An `AuthorizedListener` class is provides to perform callbacks at various stages on the authentication process.  You can replace the string "facebook" with [any service Singly supports](https://singly.com/docs)
+
+    api.authorize("facebook", new AuthorizedListener() {
+
+      public void onStart() {
+        // authorization started
+      }
+
+      public void onProgress(int progress) {
+        // authentication page load progress
+      }
+
+      public void onPageLoaded() {
+        // authentication page loaded
+      }
+
+      public void onAuthorized() {
+        // user successfully authenticated with the service
+      }
+
+      public void onError(AuthorizedListener.Errors error) {
+        // error during user authentication with the service
+      }
+
+      public void onCancel() {
+        // user cancelled the authentication
+      }
+    });
+
+### Retrieve User Social Data
+Once a user has authenticated with a service you will be able to make api calls to the Singly API to retrieve the user's social data.  This is done throught the `apiCall` method of the `SinglyClient` class.  To make an api call you provide the api path and any api parameters.  Access token is not required as it will be appended to any api calls made through the client.  All api calls are performed asynchronously.  An `APICallListener` class is provided to callback on the success or error of the call.  Upon success the JSONObject reprsenting the api response is returned to the listener.  This data can then be used within your Android app.
+    
+    api.apiCall("/profiles", apiParams, new APICallListener() {
+
+      public void onSuccess(JSONObject jsonObj) {
+        // api call success, profiles returned as JSONObject, do something
+      }
+
+      public void onError(String message) {
+        // error getting the profiles
+      }
+    });
+
+For more information on available Singly api calls check out our [API Overview](https://singly.com/docs/api).
 
 Support
 --------------
