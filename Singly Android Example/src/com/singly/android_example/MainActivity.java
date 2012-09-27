@@ -17,7 +17,6 @@ public class MainActivity
 
   String accessToken;
   Activity activity = this;
-  private ProgressDialog progressDialog;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -25,7 +24,8 @@ public class MainActivity
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
     final SinglyClient api = new SinglyClient(activity,
-      "your_client_id", "your_client_secret");
+      "your_client_id", 
+      "your_client_secret");
 
     final Intent profilesIntent = new Intent(MainActivity.this,
       ProfilesActivity.class);
@@ -33,13 +33,24 @@ public class MainActivity
     final Button facebookButton = (Button)findViewById(R.id.facebook);
     facebookButton.setOnClickListener(new View.OnClickListener() {
       public void onClick(View v) {
+
+        final ProgressDialog progressDialog = new ProgressDialog(activity);
+        progressDialog.setMessage("Loading Authentication");
+        progressDialog.setCancelable(false);
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        progressDialog.setProgress(0); // set percentage completed to 0%
+
         api.authorize("facebook", new AuthorizedListener() {
 
-          public void onStartAuthDialog() {
-            progressDialog = ProgressDialog.show(activity, "", "Loading...");
+          public void onStart() {
+            progressDialog.show();
           }
 
-          public void onFinishAuthDialog() {
+          public void onProgress(int progress) {
+            progressDialog.setProgress(progress);
+          }
+
+          public void onPageLoaded() {
             progressDialog.dismiss();
           }
 
@@ -47,10 +58,16 @@ public class MainActivity
             MainActivity.this.startActivity(profilesIntent);
           }
 
-          public void onError(String message) {
-            Toast.makeText(activity, message, Toast.LENGTH_LONG).show();
+          public void onError(AuthorizedListener.Errors error) {
+            String msg = error.toString();
+            Toast.makeText(activity, msg, Toast.LENGTH_LONG).show();
           }
 
+          public void onCancel() {
+            progressDialog.dismiss();
+            Toast.makeText(activity, "Authentication Cancelled",
+              Toast.LENGTH_LONG).show();
+          }
         });
       }
     });
@@ -58,22 +75,40 @@ public class MainActivity
     final Button githubButton = (Button)findViewById(R.id.github);
     githubButton.setOnClickListener(new View.OnClickListener() {
       public void onClick(View v) {
+
+        final ProgressDialog progressDialog = new ProgressDialog(activity);
+        progressDialog.setMessage("Loading Authentication");
+        progressDialog.setCancelable(false);
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        progressDialog.setProgress(0); // set percentage completed to 0%
+
         api.authorize("github", new AuthorizedListener() {
-          
-          public void onStartAuthDialog() {
-            progressDialog = ProgressDialog.show(activity, "", "Loading...");
+
+          public void onStart() {
+            progressDialog.show();
           }
 
-          public void onFinishAuthDialog() {
+          public void onProgress(int progress) {
+            progressDialog.setProgress(progress);
+          }
+
+          public void onPageLoaded() {
             progressDialog.dismiss();
           }
-          
+
           public void onAuthorized() {
             MainActivity.this.startActivity(profilesIntent);
           }
 
-          public void onError(String message) {
-            Toast.makeText(activity, message, Toast.LENGTH_LONG).show();
+          public void onError(AuthorizedListener.Errors error) {
+            String msg = error.toString();
+            Toast.makeText(activity, msg, Toast.LENGTH_LONG).show();
+          }
+
+          public void onCancel() {
+            progressDialog.dismiss();
+            Toast.makeText(activity, "Authentication Cancelled",
+              Toast.LENGTH_LONG).show();
           }
         });
       }
@@ -82,22 +117,40 @@ public class MainActivity
     final Button foursquareButton = (Button)findViewById(R.id.foursquare);
     foursquareButton.setOnClickListener(new View.OnClickListener() {
       public void onClick(View v) {
+
+        final ProgressDialog progressDialog = new ProgressDialog(activity);
+        progressDialog.setMessage("Loading Authentication");
+        progressDialog.setCancelable(false);
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        progressDialog.setProgress(0); // set percentage completed to 0%
+
         api.authorize("foursquare", new AuthorizedListener() {
-          
-          public void onStartAuthDialog() {
-            progressDialog = ProgressDialog.show(activity, "", "Loading...");
+
+          public void onStart() {
+            progressDialog.show();
           }
 
-          public void onFinishAuthDialog() {
+          public void onProgress(int progress) {
+            progressDialog.setProgress(progress);
+          }
+
+          public void onPageLoaded() {
             progressDialog.dismiss();
           }
-          
+
           public void onAuthorized() {
             MainActivity.this.startActivity(profilesIntent);
           }
 
-          public void onError(String message) {
-            Toast.makeText(activity, message, Toast.LENGTH_LONG).show();
+          public void onError(AuthorizedListener.Errors error) {
+            String msg = error.toString();
+            Toast.makeText(activity, msg, Toast.LENGTH_LONG).show();
+          }
+
+          public void onCancel() {
+            progressDialog.dismiss();
+            Toast.makeText(activity, "Authentication Cancelled",
+              Toast.LENGTH_LONG).show();
           }
         });
       }

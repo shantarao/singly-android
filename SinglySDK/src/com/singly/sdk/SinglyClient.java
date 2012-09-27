@@ -25,6 +25,12 @@ import android.util.Log;
 import com.singly.util.JSON;
 import com.singly.util.SinglyHttpClient;
 
+/**
+ * A client that handles all authentication with various services through Singly
+ * and calls made to the Singly API.
+ * 
+ * @see https://singly.com/docs/api
+ */
 public class SinglyClient {
 
   public static final String AUTH_REDIRECT = "singly://success";
@@ -39,12 +45,12 @@ public class SinglyClient {
   private SinglyHttpClient httpClient;
 
   /**
-   * Returns true if the context has permission to access the network state, 
-   * access the internet, and the network is connected.
+   * Returns true if the context has permission to access the network state and
+   * access the internet.
    * 
-   * @return True if the context can connect to the internet.
+   * @return True if the context has the correct permissions.
    */
-  private boolean canConnectToInternet() {
+  private boolean hasNetworkPermissions() {
 
     // get permissions for accessing the internet and network state
     int internetPerm = context
@@ -57,19 +63,26 @@ public class SinglyClient {
     boolean networkAllowed = networkStatePerm == PackageManager.PERMISSION_GRANTED;
 
     // if they are check if we are connected to the network
-    if (internetAllowed && networkAllowed) {
-      ConnectivityManager cm = (ConnectivityManager)context
-        .getSystemService(Context.CONNECTIVITY_SERVICE);
-      NetworkInfo netInfo = cm.getActiveNetworkInfo();
-      if (netInfo != null && netInfo.isConnectedOrConnecting()) {
-        return true;
-      }
+    return (internetAllowed && networkAllowed);
+  }
+
+  /**
+   * Returns true if the app is connected to the internet, meaning the network
+   * is connected.
+   * 
+   * @return True if the context can connect to the internet.
+   */
+  private boolean isConnectedToInternet() {
+
+    // check if we are connected to the network
+    ConnectivityManager cm = (ConnectivityManager)context
+      .getSystemService(Context.CONNECTIVITY_SERVICE);
+    NetworkInfo netInfo = cm.getActiveNetworkInfo();
+    if (netInfo != null && netInfo.isConnectedOrConnecting()) {
+      return true;
     }
 
-    // TODO: this could be made better by giving specific messages, such as
-    // no permissions or no network
-
-    // not connected to the network or don't have permissions
+    // not connected to the network
     return false;
   }
 
@@ -89,13 +102,13 @@ public class SinglyClient {
 
     String formattedUrl = null;
     try {
-      
+
       // query parameters are optional
       String query = null;
       if (qparams != null && qparams.size() > 0) {
         query = URLEncodedUtils.format(qparams, "UTF-8");
       }
-      
+
       // create the formatted UTF-8 url, always https and using base singly
       URI uri = URIUtils.createURI("https", BASE_URL, -1, path, query, null);
       formattedUrl = uri.toASCIIString();
@@ -124,7 +137,7 @@ public class SinglyClient {
     this.httpClient = new SinglyHttpClient();
     httpClient.initialize();
   }
-  
+
   /**
    * Called by Android activities to shutdown the Singly client and release
    * resources held.  Usually called during onStop lifecycle event.
@@ -149,11 +162,18 @@ public class SinglyClient {
    */
   public void authorize(final String service, final AuthorizedListener callback) {
 
+    // start of the authorization process
+    callback.onStart();
+
+    // fail early if no permissions
+    if (!hasNetworkPermissions()) {
+      callback.onError(AuthorizedListener.Errors.NO_NETWORK_PERMISSIONS);
+      return;
+    }
+    
     // fail early if no internet access
-    if (!canConnectToInternet()) {
-      callback.onError("The authorize method requires internet access.  "
-        + "Either the network is disconnected or permissions are not "
-        + "correct.");
+    if (!isConnectedToInternet()) {
+      callback.onError(AuthorizedListener.Errors.NO_INTERNET_ACCESS);
       return;
     }
 
@@ -166,16 +186,24 @@ public class SinglyClient {
     // create the authorization url
     String authorizeUrl = createURL("/oauth/authorize", qparams);
     if (authorizeUrl == null) {
-      callback.onError("Error creating authorize url.");
+      callback.onError(AuthorizedListener.Errors.AUTHORIZE_SERVICE_URL);
       return;
     }
 
-    // log and create a new authorization dialog
-    callback.onStartAuthDialog();
     Log.d(TAG, authorizeUrl);
     new AuthDialog(context, authorizeUrl, new AuthDialog.DialogListener() {
 
-      public void onComplete(final String successUrl) {
+      @Override
+      public void onProgress(int progress) {
+        callback.onProgress(progress);
+      }
+
+      @Override
+      public void onPageLoaded() {
+        callback.onPageLoaded();
+      }
+
+      public void onAuthorized(final String successUrl) {
 
         AsyncTask authTask = new AsyncTask<Object, Void, Boolean>() {
 
@@ -210,7 +238,7 @@ public class SinglyClient {
                 editor.commit();
               }
               else {
-                
+
                 // no access token, authorization failed
                 return false;
               }
@@ -219,7 +247,7 @@ public class SinglyClient {
               return true;
             }
             catch (Exception e) {
-              
+
               // exception, authorization failed
               return false;
             }
@@ -232,30 +260,68 @@ public class SinglyClient {
               callback.onAuthorized();
             }
             else {
-              callback.onError("Error getting authorize response");
+              callback.onError(AuthorizedListener.Errors.NO_ACCESS_TOKEN);
             }
           }
         };
 
-        // execute the auth task with the url from the auth dialog
-        callback.onFinishAuthDialog();
+        // execute the auth task
         authTask.execute();
       }
-    }).show();
 
+      @Override
+      public void onError() {
+        callback.onError(AuthorizedListener.Errors.AUTHENTICATION_ERROR);
+      }
+
+      @Override
+      public void onCancel() {
+        callback.onCancel();
+      }
+
+    }).show();
   }
 
+  /**
+   * Performs an api call to the Singly API.
+   * 
+   * The {@link #authorize(String, AuthorizedListener)} method muse have been
+   * called for at least one service before any api calls are made.  Once 
+   * authorized the application stores an access token used to call the 
+   * Singly api.  That access token is then appended to any api calls made
+   * through this method.
+   * 
+   * This method performs the api call in an asynchronous method and returns
+   * any response as a JSONObject to the APICallListener callback.  To perform
+   * the call an AsyncTask is used with the success/error callbacks happening
+   * in the PostExecute method.  This means clients should be fine performing
+   * UI methods, such as Toasts and Dialogs, within the APICallListener callback
+   * methods.
+   * 
+   * @param endpoint The singly api call to make.
+   * @param parameters The api call parameters.  You do not need to include
+   * the access token, that will be automatically appended.
+   * @param callback The listener class used to callback on success or error
+   * of the api call.
+   * 
+   * @see https://singly.com/docs/api For documentation on Singly api calls.
+   */
   public void apiCall(final String endpoint,
     final Map<String, String> parameters, final APICallListener callback) {
 
-    // fail early if no internet access
-    if (!canConnectToInternet()) {
-      callback.onError("The apiCall method requires internet access.  "
-        + "Either the network is disconnected or permissions are not "
-        + "correct.");
+    // fail early if no permissions
+    if (!hasNetworkPermissions()) {
+      callback.onError("This application doesn't have permissions to acces" +
+      		"the internet or network state.");
       return;
     }
-
+    
+    // fail early if no internet access
+    if (!isConnectedToInternet()) {
+      callback.onError("The application cannot connect to the internet.");
+      return;
+    }
+    
     AsyncTask apiCallTask = new AsyncTask<Object, Integer, JSONObject>() {
 
       @Override
@@ -283,16 +349,16 @@ public class SinglyClient {
           // perform the request to the api
           Log.d(TAG, "API call to: " + apiCallUrl);
           byte[] responseBytes = httpClient.get(apiCallUrl);
-          
+
           // pare and return the JSON response
           String response = new String(responseBytes);
           Log.d(TAG, response);
           JSONObject root = JSON.parse(response);
-          
+
           return root;
         }
         catch (Exception e) {
-          
+
           // error during the api call, return null which singles error
           String message = e.getMessage();
           Log.e(TAG, "Api call error:" + endpoint + " " + message);
@@ -316,4 +382,21 @@ public class SinglyClient {
     // execute the api call in an async task
     apiCallTask.execute();
   }
+
+  public Context getContext() {
+    return context;
+  }
+
+  public void setContext(Context context) {
+    this.context = context;
+  }
+
+  public void setClientId(String clientId) {
+    this.clientId = clientId;
+  }
+
+  public void setClientSecret(String clientSecret) {
+    this.clientSecret = clientSecret;
+  }
+
 }

@@ -23,7 +23,8 @@ public class ProfilesActivity
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_profiles);
     final SinglyClient api = new SinglyClient(activity,
-      "your_client_id", "your_client_secret");
+      "your_client_id", 
+      "your_client_secret");
 
     api.apiCall("/profiles", null, new APICallListener() {
 

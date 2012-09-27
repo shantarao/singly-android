@@ -27,6 +27,15 @@ import org.apache.http.util.EntityUtils;
 
 import android.util.Log;
 
+/**
+ * An HTTP client class that handles GET and POST calls.
+ * 
+ * The client is thread safe,  reuses connections to the same server, sends it 
+ * content in UTF-8, uses HTTP 1.1 if available, and will retry connections that
+ * error up to 3 times by default.  
+ * 
+ * The default user agent is Singly-Android-SDK.
+ */
 public class SinglyHttpClient {
 
   private static final String TAG = SinglyHttpClient.class.getSimpleName();
@@ -46,6 +55,10 @@ public class SinglyHttpClient {
     initialize();
   }
 
+  /**
+   * Initializes the SinglyHttpClient.  This method must be called before any
+   * request methods are called.
+   */
   public void initialize() {
 
     HttpParams params = new BasicHttpParams();
@@ -74,14 +87,28 @@ public class SinglyHttpClient {
     httpClient = new DefaultHttpClient(connMgr, params);
   }
 
+  /**
+   * Shuts down the SinglyHttpClient.  This method can be called to properly
+   * release resources, such as open connections, that are being held.
+   */
   public void shutdown() {
     httpClient.getConnectionManager().shutdown();
   }
 
+  /**
+   * Returns true if we can successfully connect to the url and get a 200 HTTP
+   * response code.
+   * 
+   * @param url The url to ping.
+   * 
+   * @return True if we can successfully connect to the url.
+   */
   public boolean ping(String url) {
 
     try {
 
+      // must be able to connect and get the status code, but does not download
+      // any of the page content
       HttpGet httpget = new HttpGet(url);
       HttpResponse response = httpClient.execute(httpget);
       StatusLine status = response.getStatusLine();
@@ -97,13 +124,22 @@ public class SinglyHttpClient {
 
     return false;
   }
-  
+
+  /**
+   * Returns a byte array containing the GET response to the url.  This method
+   * will try up to 3 times to retrieve a url before erroring.
+   * 
+   * @param url The url to GET.
+   * 
+   * @return The url content as a byte array.
+   */
   public byte[] get(String url)
     throws HttpException {
 
     HttpGet httpget = null;
     boolean errored = false;
 
+    // try a max number of time to get the url
     for (int i = 0; i < maxRetries; i++) {
 
       try {
@@ -116,6 +152,7 @@ public class SinglyHttpClient {
           throw new HttpException(statusCode, status.getReasonPhrase());
         }
 
+        // log success if previously errored
         HttpEntity entity = response.getEntity();
         if (entity != null) {
           if (errored) {
@@ -142,6 +179,14 @@ public class SinglyHttpClient {
       + maxRetries);
   }
 
+  /**
+   * Returns a byte array containing the POST response to the url.
+   * 
+   * @param url The url to POST.
+   * @param params The list of name and value pairs to post to the url.
+   * 
+   * @return The url content as a byte array.
+   */
   public byte[] post(String url, List<NameValuePair> params)
     throws HttpException {
 
@@ -154,6 +199,14 @@ public class SinglyHttpClient {
     }
   }
 
+  /**
+   * Returns a byte array containing the POST response to the url.
+   * 
+   * @param url The url to POST.
+   * @param body The raw body content to post to the url.
+   * 
+   * @return The url content as a byte array.
+   */
   public byte[] postAsBody(String url, StringEntity body)
     throws HttpException {
 
