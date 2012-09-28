@@ -1,9 +1,0 @@
-<resources>
-
-    <string name="app_name">Singly Android Example</string>
-    <string name="profiles">Authenticated Profiles:</string>
-    <string name="menu_settings">Settings</string>
-    <string name="title_activity_main">MainActivity</string>
-    <string name="title_activity_profiles">Profiles</string>
-
-</resources>
