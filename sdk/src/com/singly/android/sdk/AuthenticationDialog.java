@@ -22,7 +22,7 @@ import android.widget.LinearLayout;
  * is used by the Singly client.  Any clients to the Singly API should use the 
  * {@link SinglyClient} class for authentication.
  */
-class AuthDialog
+class AuthenticationDialog
   extends Dialog {
 
   private static final FrameLayout.LayoutParams FILL = new FrameLayout.LayoutParams(
@@ -49,7 +49,7 @@ class AuthDialog
      * @param url The callback url containing the code used to get the access
      * token for the service based on the user authentication.
      */
-    public void onAuthorized(String url);
+    public void onAuthenticated(String url);
 
     /**
      * Called if an error occurs during the authentication process.
@@ -83,8 +83,8 @@ class AuthDialog
 
       // on successful authentication we should get the redirect url
       if (url.startsWith(SinglyClient.AUTH_REDIRECT)) {
-        dialogListener.onAuthorized(url);
-        AuthDialog.this.dismiss();
+        dialogListener.onAuthenticated(url);
+        AuthenticationDialog.this.dismiss();
         return true;
       }
 
@@ -99,7 +99,7 @@ class AuthDialog
       // dismiss the dialog on error
       super.onReceivedError(view, errorCode, description, failingUrl);
       dialogListener.onError();
-      AuthDialog.this.dismiss();
+      AuthenticationDialog.this.dismiss();
     }
 
     @Override
@@ -112,7 +112,7 @@ class AuthDialog
     }
   }
 
-  public AuthDialog(Context context, String authUrl,
+  public AuthenticationDialog(Context context, String authUrl,
     DialogListener dialogListener) {
     super(context, android.R.style.Theme_Translucent_NoTitleBar);
     this.authUrl = authUrl;

@@ -149,32 +149,33 @@ public class SinglyClient {
   }
 
   /**
-   * Called to authorize a user through singly for a specific service.
+   * Called to authenticate a user through singly for a specific service.
    * 
-   * Authorize will open a WebView to the service to authorize the user.  Once
+   * Authenticate will open a WebView to a service to authenticate a user.  Once
    * the user authenticates with the service, calls to get an oauth access 
    * token are performed in an AsyncTask.  You should be able to perform any
    * main thread activities, such as opening dialogs, in the listener callback
    * methods.
    * 
-   * @param service The service to authorize the user, facebook for example.
+   * @param service The service to authenticate the user against.
    * @param callback The listener class used to callback at different point
-   * during the authorization process.
+   * during the authentication process.
    */
-  public void authorize(final String service, final AuthorizedListener callback) {
+  public void authenticate(final String service,
+    final AuthenticationListener callback) {
 
-    // start of the authorization process
+    // start of the authentication process
     callback.onStart();
 
     // fail early if no permissions
     if (!hasNetworkPermissions()) {
-      callback.onError(AuthorizedListener.Errors.NO_NETWORK_PERMISSIONS);
+      callback.onError(AuthenticationListener.Errors.NO_NETWORK_PERMISSIONS);
       return;
     }
 
     // fail early if no internet access
     if (!isConnectedToInternet()) {
-      callback.onError(AuthorizedListener.Errors.NO_INTERNET_ACCESS);
+      callback.onError(AuthenticationListener.Errors.NO_INTERNET_ACCESS);
       return;
     }
 
@@ -184,111 +185,131 @@ public class SinglyClient {
     qparams.add(new BasicNameValuePair("redirect_uri", AUTH_REDIRECT));
     qparams.add(new BasicNameValuePair("service", service));
 
-    // create the authorization url
-    String authorizeUrl = createURL("/oauth/authorize", qparams);
-    if (authorizeUrl == null) {
-      callback.onError(AuthorizedListener.Errors.AUTHORIZE_SERVICE_URL);
+    // create the authentication url
+    String authUrl = createURL("/oauth/authorize", qparams);
+    if (authUrl == null) {
+      callback.onError(AuthenticationListener.Errors.AUTHENTICATE_SERVICE_URL);
       return;
     }
 
-    Log.d(TAG, authorizeUrl);
-    new AuthDialog(context, authorizeUrl, new AuthDialog.DialogListener() {
+    Log.d(TAG, authUrl);
+    new AuthenticationDialog(context, authUrl,
+      new AuthenticationDialog.DialogListener() {
 
-      @Override
-      public void onProgress(int progress) {
-        callback.onProgress(progress);
-      }
+        @Override
+        public void onProgress(int progress) {
+          callback.onProgress(progress);
+        }
 
-      @Override
-      public void onPageLoaded() {
-        callback.onPageLoaded();
-      }
+        @Override
+        public void onPageLoaded() {
+          callback.onPageLoaded();
+        }
 
-      public void onAuthorized(final String successUrl) {
+        public void onAuthenticated(final String successUrl) {
 
-        AsyncTask authTask = new AsyncTask<Object, Void, Boolean>() {
+          AsyncTask authTask = new AsyncTask<Object, Void, Boolean>() {
 
-          @Override
-          protected Boolean doInBackground(Object... params) {
+            @Override
+            protected Boolean doInBackground(Object... params) {
 
-            // get the auth code from the auth dialog return query parameter
-            Uri uri = Uri.parse(successUrl);
-            String authCode = uri.getQueryParameter("code");
+              // get the auth code from the auth dialog return query parameter
+              Uri uri = Uri.parse(successUrl);
+              String authCode = uri.getQueryParameter("code");
 
-            // create the access token url
-            List<NameValuePair> qparams = new ArrayList<NameValuePair>();
-            qparams.add(new BasicNameValuePair("client_id", clientId));
-            qparams.add(new BasicNameValuePair("client_secret", clientSecret));
-            qparams.add(new BasicNameValuePair("code", authCode));
+              // create the access token url
+              List<NameValuePair> qparams = new ArrayList<NameValuePair>();
+              qparams.add(new BasicNameValuePair("client_id", clientId));
+              qparams
+                .add(new BasicNameValuePair("client_secret", clientSecret));
+              qparams.add(new BasicNameValuePair("code", authCode));
 
-            // access token url, parameters are added to the post instead of url
-            String accessTokenUrl = createURL("/oauth/access_token", null);
+              // access token url, parameters are added to the post instead of
+              // url
+              String accessTokenUrl = createURL("/oauth/access_token", null);
 
-            String accessToken = null;
-            try {
+              String accessToken = null;
+              try {
 
-              // do the post to get the access token
-              byte[] responseBytes = httpClient.post(accessTokenUrl, qparams);
-              JSONObject root = JSON.parse(new String(responseBytes));
-              accessToken = JSON.getString(root, "access_token", null);
+                // do the post to get the access token
+                byte[] responseBytes = httpClient.post(accessTokenUrl, qparams);
+                JSONObject root = JSON.parse(new String(responseBytes));
+                accessToken = JSON.getString(root, "access_token", null);
 
-              // save the access token in the shared preferences
-              if (accessToken != null) {
-                SharedPreferences.Editor editor = prefs.edit();
-                editor.putString("accessToken", accessToken);
-                editor.commit();
+                // save the access token in the shared preferences
+                if (accessToken != null) {
+                  SharedPreferences.Editor editor = prefs.edit();
+                  editor.putString("accessToken", accessToken);
+                  editor.commit();
+                }
+                else {
+
+                  // no access token, authorization failed
+                  return false;
+                }
+
+                // authorization succeeded
+                return true;
               }
-              else {
+              catch (Exception e) {
 
-                // no access token, authorization failed
+                // exception, authorization failed
                 return false;
               }
-
-              // authorization succeeded
-              return true;
             }
-            catch (Exception e) {
 
-              // exception, authorization failed
-              return false;
+            @Override
+            protected void onPostExecute(Boolean result) {
+
+              if (result) {
+                callback.onAuthenticated();
+              }
+              else {
+                callback.onError(AuthenticationListener.Errors.NO_ACCESS_TOKEN);
+              }
             }
-          }
+          };
 
-          @Override
-          protected void onPostExecute(Boolean result) {
+          // execute the auth task
+          authTask.execute();
+        }
 
-            if (result) {
-              callback.onAuthorized();
-            }
-            else {
-              callback.onError(AuthorizedListener.Errors.NO_ACCESS_TOKEN);
-            }
-          }
-        };
+        @Override
+        public void onError() {
+          callback.onError(AuthenticationListener.Errors.AUTHENTICATION_ERROR);
+        }
 
-        // execute the auth task
-        authTask.execute();
-      }
+        @Override
+        public void onCancel() {
+          callback.onCancel();
+        }
 
-      @Override
-      public void onError() {
-        callback.onError(AuthorizedListener.Errors.AUTHENTICATION_ERROR);
-      }
+      }).show();
+  }
 
-      @Override
-      public void onCancel() {
-        callback.onCancel();
-      }
+  /**
+   * Removes any saved authentication state from the Singly client.  After
+   * calling clear, to call the api, users will need to re-authenticate with at
+   * least one service.
+   * 
+   * This is useful in cases where we have an access token but for some reason
+   * it isn't valid.  This method allows us to clear and then use authenticate
+   * to get a new token.
+   */
+  public void clear() {
 
-    }).show();
+    // removes the saved authentication access tokens and keys
+    SharedPreferences.Editor editor = prefs.edit();
+    editor.remove("accessToken");
+    editor.commit();
   }
 
   /**
    * Performs a Singly api call.
    * 
-   * The {@link #authorize(String, AuthorizedListener)} method muse have been
-   * called for at least one service before any api calls are made.  Once 
-   * authorized the application stores an access token used to call the 
+   * The {@link #authenticate(String, AuthenticationListener)} method must be
+   * called at least once for a service before any api calls are made.  Once 
+   * authenticated the application stores an access token used to call the 
    * Singly api.  That access token is then appended to any api calls made
    * through this method.
    * 
@@ -336,7 +357,7 @@ public class SinglyClient {
     // fail early for no access token
     String accessToken = prefs.getString("accessToken", null);
     if (accessToken == null) {
-      callback.onError("The application must be authorized with at least one"
+      callback.onError("The application must be authenticated with at least one"
         + " service to make api calls.");
       return;
     }
@@ -358,7 +379,7 @@ public class SinglyClient {
       }
     }
 
-    // get methods and post methods that are posting a raw body get all 
+    // get methods and post methods that are posting a raw body get all
     // parameters in the url
     if ((isGet || isRawPost) && iparams.size() > 0) {
       qparams.addAll(iparams);
@@ -389,7 +410,7 @@ public class SinglyClient {
             StringEntity jsonBody = new StringEntity(rawBody);
             responseBytes = httpClient.postAsBody(apiCallUrl, jsonBody);
           }
-          
+
           // no response bytes is an error
           if (responseBytes == null) {
             Log.e(TAG, "Api call returned 0 bytes:" + endpoint);
