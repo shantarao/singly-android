@@ -1,13 +1,13 @@
 package com.singly.android.sdk;
 
 /**
- * A callback interface for the different authorization states that occur when
- * using Singly to authorize with one of the api services, such as facebook.  
+ * A callback interface for the different authentication states that occur when
+ * using Singly to authenticate with one of the api services, such as facebook.  
  * 
- * When calling the {@link SinglyClient#authorize(String, AuthorizedListener)} 
- * method the AuthorizedLister will be called back during various states.
+ * When calling the {@link SinglyClient#authenticate(String, AuthenticationListener)} 
+ * method the AuthenticationListener will be called back during various states.
  */
-public interface AuthorizedListener {
+public interface AuthenticationListener {
 
   /**
    * Different error types that can occur during the authentication process.
@@ -15,7 +15,7 @@ public interface AuthorizedListener {
   public static enum Errors {
     NO_NETWORK_PERMISSIONS,
     NO_INTERNET_ACCESS,
-    AUTHORIZE_SERVICE_URL,
+    AUTHENTICATE_SERVICE_URL,
     NO_ACCESS_TOKEN,
     AUTHENTICATION_ERROR;
   }
@@ -43,14 +43,14 @@ public interface AuthorizedListener {
 
   /**
    * Called after the user has authenticated with the service.  This is a 
-   * terminal state in the authorization process.
+   * terminal state in the authentication process.
    */
-  public void onAuthorized();
+  public void onAuthenticated();
 
   /**
-   * Called if there is an error with authorization or if the user was not 
+   * Called if there is an error with authentication or if the user was not 
    * able to successfully authenticate with the service.  This is a 
-   * terminal state in the authorization process.
+   * terminal state in the authentication process.
    * 
    * @param error The type of error that occured.
    */

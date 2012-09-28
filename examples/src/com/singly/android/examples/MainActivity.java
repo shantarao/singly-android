@@ -9,7 +9,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
-import com.singly.android.sdk.AuthorizedListener;
+import com.singly.android.sdk.AuthenticationListener;
 import com.singly.android.sdk.SinglyClient;
 
 public class MainActivity
@@ -40,7 +40,7 @@ public class MainActivity
         progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
         progressDialog.setProgress(0); // set percentage completed to 0%
 
-        api.authorize("facebook", new AuthorizedListener() {
+        api.authenticate("facebook", new AuthenticationListener() {
 
           public void onStart() {
             progressDialog.show();
@@ -54,11 +54,11 @@ public class MainActivity
             progressDialog.dismiss();
           }
 
-          public void onAuthorized() {
+          public void onAuthenticated() {
             MainActivity.this.startActivity(profilesIntent);
           }
 
-          public void onError(AuthorizedListener.Errors error) {
+          public void onError(AuthenticationListener.Errors error) {
             String msg = error.toString();
             Toast.makeText(activity, msg, Toast.LENGTH_LONG).show();
           }
@@ -82,7 +82,7 @@ public class MainActivity
         progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
         progressDialog.setProgress(0); // set percentage completed to 0%
 
-        api.authorize("github", new AuthorizedListener() {
+        api.authenticate("github", new AuthenticationListener() {
 
           public void onStart() {
             progressDialog.show();
@@ -96,11 +96,11 @@ public class MainActivity
             progressDialog.dismiss();
           }
 
-          public void onAuthorized() {
+          public void onAuthenticated() {
             MainActivity.this.startActivity(profilesIntent);
           }
 
-          public void onError(AuthorizedListener.Errors error) {
+          public void onError(AuthenticationListener.Errors error) {
             String msg = error.toString();
             Toast.makeText(activity, msg, Toast.LENGTH_LONG).show();
           }
@@ -124,7 +124,7 @@ public class MainActivity
         progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
         progressDialog.setProgress(0); // set percentage completed to 0%
 
-        api.authorize("foursquare", new AuthorizedListener() {
+        api.authenticate("foursquare", new AuthenticationListener() {
 
           public void onStart() {
             progressDialog.show();
@@ -138,11 +138,11 @@ public class MainActivity
             progressDialog.dismiss();
           }
 
-          public void onAuthorized() {
+          public void onAuthenticated() {
             MainActivity.this.startActivity(profilesIntent);
           }
 
-          public void onError(AuthorizedListener.Errors error) {
+          public void onError(AuthenticationListener.Errors error) {
             String msg = error.toString();
             Toast.makeText(activity, msg, Toast.LENGTH_LONG).show();
           }

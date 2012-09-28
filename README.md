@@ -35,9 +35,9 @@ The first step is creating the client class as shown below.  This assume you hav
 Note: The context is the Android `Context` that the SinglyClient is currently bound too.  This is used to bind any authentication Dialog that may be launched.  This can either be the current activity which is using the SinglyClient or the global Application context.
 
 ### Authenticate the User
-To access the Singly API your user must first authenticate with one or more services that Singly supports.  This is done through the `authorize()` method of the SinglyClient class.  The authorize method will launch a WebView Dialog to authenticate the user with the service.  An `AuthorizedListener` class is provides to perform callbacks at various stages on the authentication process.  You can replace the string "facebook" with [any service Singly supports](https://singly.com/docs)
+To access the Singly API your user must first authenticate with one or more services that Singly supports.  This is done through the `authenticate()` method of the SinglyClient class.  The authenticate method will launch a WebView Dialog to authenticate the user with the service.  An `AuthenticationListener` class is provides to perform callbacks at various stages on the authentication process.  You can replace the string "facebook" with [any service Singly supports](https://singly.com/docs)
 
-    api.authorize("facebook", new AuthorizedListener() {
+    api.authenticate("facebook", new AuthenticationListener() {
 
       public void onStart() {
         // authorization started
@@ -51,7 +51,7 @@ To access the Singly API your user must first authenticate with one or more serv
         // authentication page loaded
       }
 
-      public void onAuthorized() {
+      public void onAuthenticated() {
         // user successfully authenticated with the service
       }
 
