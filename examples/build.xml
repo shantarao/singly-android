@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:ivy="antlib:org.apache.ivy.ant" name="singly-android-examples"
+  default="help">
+
+  <property file="local.properties" />
+
+  <property file="ant.properties" />
+
+  <property environment="env" />
+  <condition property="sdk.dir" value="${env.ANDROID_HOME}">
+    <isset property="env.ANDROID_HOME" />
+  </condition>
+  
+    <!-- Android compatibility support library -->
+  <property name="support.ver" value="v4" />
+  <condition property="support.dir"
+    value="${sdk.dir}/extras/android/compatibility/${support.ver}">
+    <isset property="sdk.dir" />
+  </condition>
+  <property name="libs.dir" value="libs/" />
+
+  <loadproperties srcFile="project.properties" />
+
+  <import file="custom_rules.xml" optional="true" />
+
+  <!-- version-tag: custom -->
+  <import file="${sdk.dir}/tools/ant/build.xml" />
+
+  <!-- 
+  Dependency management, pulls in android compat library and any dependencies 
+  registered with Ivy. 
+  -->
+  <target name="resolve" description="retrieve dependencies with ivy">
+    <copy file="${support.dir}/android-support-${support.ver}.jar"
+          todir="${libs.dir}"
+          force="true"
+          failonerror="false" />
+    <ivy:retrieve conf="binaries" pattern="libs/[artifact](-[classifier]).[ext]" />
+  </target>
+
+  <!-- Clean the Ivy cache, deletes and recreates the libs directory -->
+  <target name="clean-libs" description="clean libs directory and ivy cache">
+    <ivy:cleancache />
+    <delete dir="${libs.dir}" />
+    <mkdir dir="${libs.dir}" />
+  </target>
+
+
+</project>

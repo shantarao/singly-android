@@ -1,0 +1,8 @@
+<ivy-module version="2.0">
+  <info organisation="com.singly.android" module="singly-android-examples" />
+  <configurations>
+    <conf name="binaries" description="binary jars" />
+  </configurations>
+  <dependencies>
+  </dependencies>
+</ivy-module>

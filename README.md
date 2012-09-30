@@ -12,6 +12,13 @@ The library code is contained in the SinglyAndroidSDK project in the sdk folder.
 
 Sample implementations are contained in the SinglyAndroidExamples project in the examples.  The com.singly.android.examples.MainActivity and ProfilesActivity show usage of the SinglyClient class to authenticate and perform API calls.
 
+## Downloading dependencies
+To handle dependency management, toavoid storing jars in git, and to allow building and installing from the command line, we use Ant and Ivy.  To use the SDK you will need both Ant and Ivy installed on your build machine.  Once you have cloned the git repository, go into the sdk folder and examples folder and run the following command.
+  
+  ant resolve
+
+This will pull in all dependency jars into the libs folder.  The android compatibility support jar is also copied from Android SDK directory.  This assumes that you have the android extras compatibility jars installed.  If not they can be installed from the Android SDK manager.
+
 ## Registering Your Singly App
 
 In order to use the Android client you will need to do the following:
