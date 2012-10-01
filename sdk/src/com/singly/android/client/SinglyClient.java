@@ -1,4 +1,4 @@
-package com.singly.android.sdk;
+package com.singly.android.client;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -389,10 +389,10 @@ public class SinglyClient {
     final String apiCallUrl = createURL(endpoint, qparams);
     final List<NameValuePair> postParams = isPost ? iparams : null;
 
-    AsyncTask apiCallTask = new AsyncTask<Object, Integer, JSONObject>() {
+    AsyncTask apiCallTask = new AsyncTask<Object, Integer, String>() {
 
       @Override
-      protected JSONObject doInBackground(Object... params) {
+      protected String doInBackground(Object... params) {
 
         try {
 
@@ -420,9 +420,8 @@ public class SinglyClient {
           // pare and return the JSON response
           String response = new String(responseBytes);
           Log.d(TAG, response);
-          JSONObject root = JSON.parse(response);
 
-          return root;
+          return response;
         }
         catch (Exception e) {
 
@@ -435,10 +434,10 @@ public class SinglyClient {
       }
 
       @Override
-      protected void onPostExecute(JSONObject result) {
+      protected void onPostExecute(String response) {
 
-        if (result != null) {
-          callback.onSuccess(result);
+        if (response != null) {
+          callback.onSuccess(response);
         }
         else {
           callback.onError("Api call error");

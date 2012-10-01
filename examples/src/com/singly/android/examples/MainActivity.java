@@ -9,8 +9,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
-import com.singly.android.sdk.AuthenticationListener;
-import com.singly.android.sdk.SinglyClient;
+import com.singly.android.client.AuthenticationListener;
+import com.singly.android.client.SinglyClient;
 
 public class MainActivity
   extends Activity {

@@ -9,8 +9,9 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.widget.TextView;
 
-import com.singly.android.sdk.APICallListener;
-import com.singly.android.sdk.SinglyClient;
+import com.singly.android.client.APICallListener;
+import com.singly.android.client.SinglyClient;
+import com.singly.android.util.JSON;
 
 public class ProfilesActivity
   extends Activity {
@@ -28,7 +29,9 @@ public class ProfilesActivity
 
     api.apiCall("/profiles", "GET", null, null, new APICallListener() {
 
-      public void onSuccess(JSONObject jsonObj) {
+      public void onSuccess(String response) {
+        
+        JSONObject jsonObj = JSON.parse(response);
         TextView t = (TextView)findViewById(R.id.profiles);
         for (Iterator iter = jsonObj.keys(); iter.hasNext();) {
           String profile = (String)iter.next();

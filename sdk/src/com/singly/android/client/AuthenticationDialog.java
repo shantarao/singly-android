@@ -1,4 +1,4 @@
-package com.singly.android.sdk;
+package com.singly.android.client;
 
 import android.app.Dialog;
 import android.content.Context;
