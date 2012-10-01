@@ -1,4 +1,4 @@
-package com.singly.android.sdk;
+package com.singly.android.client;
 
 /**
  * A callback interface for the different authentication states that occur when

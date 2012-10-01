@@ -1,6 +1,4 @@
-package com.singly.android.sdk;
-
-import org.json.JSONObject;
+package com.singly.android.client;
 
 /**
  * Callback interface for making API calls to the Singly api.
@@ -10,9 +8,9 @@ public interface APICallListener {
   /**
    * Called when the API call has successfully returned.
    * 
-   * @param jsonObj The JSONObject returned from the API.
+   * @param response The String response returned from the API call.
    */
-  public void onSuccess(JSONObject jsonObj);
+  public void onSuccess(String response);
 
   /**
    * Called when the API call errors and does not return successfully.

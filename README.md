@@ -1,5 +1,9 @@
 # Singly Android Client
 
+## Alpha
+Be aware that the Singly Android Client is in an alpha state.  Package names, class names, and method names are subject to change.  As we wrok to make the sdk stable we are not concerned with breaking backwards compatibility.  This will of course change in the future as the product becomes more stable.
+
+## Overview
 This repository contains two different Android projects.  The first is the Singly Android client library.  This is a library project you can include into your Android apps that makes it easy to use the Singly API.  The second in an example Android project that show useage of the Singly client.
 
 The Singly Android client is a library supporting the [Singly](https://singly.com) social API that will let you
@@ -8,7 +12,7 @@ The Singly Android client is a library supporting the [Singly](https://singly.co
   - Make requests to the Singly API to retrieve your users' social data for use in your app
 
 
-The library code is contained in the SinglyAndroidSDK project in the sdk folder.  The com.singly.android.sdk.SinglyClient class is the entry point to using the Singly API in your Android project.
+The library code is contained in the SinglyAndroidSDK project in the sdk folder.  The com.singly.android.client.SinglyClient class is the entry point to using the Singly API in your Android project.
 
 Sample implementations are contained in the SinglyAndroidExamples project in the examples.  The com.singly.android.examples.MainActivity and ProfilesActivity show usage of the SinglyClient class to authenticate and perform API calls.
 
