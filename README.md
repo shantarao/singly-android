@@ -29,8 +29,13 @@ In order to use the Android client you will need to do the following:
 
 ## Using the Android Client
 
+### AuthenticationActivity
+To use the SinglyClient you will need to register the com.singly.android.client.AuthenticationActivity class as an activity in your AndroidManifest.xml file.  It will look like this:
+
+    <activity android:name="com.singly.android.client.AuthenticationActivity" />
+
 ### Instantiating the SinglyClient
-The first step is creating the client class as shown below.  This assume you have gone through the registration process and have obtained your clientId and clientSecret. 
+Next your will need to create the SinglyClient class as shown below.  Follow the Singly app registration process described above to obtain your client id and client secret. 
 
     SinglyClient api = new SinglyClient("your_client_id", "your_client_secret");
 
