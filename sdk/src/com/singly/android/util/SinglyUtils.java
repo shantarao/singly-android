@@ -141,7 +141,7 @@ public class SinglyUtils {
       Context.MODE_PRIVATE);
     return prefs.getString("accessToken", null);
   }
-  
+
   /**
    * Removes the access token from shared preferences.
    * 

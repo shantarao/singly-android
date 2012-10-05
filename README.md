@@ -1,4 +1,4 @@
-# Singly Android Client
+# Singly Android SDK
 
 ## Alpha
 Be aware that the Singly Android Client is in an alpha state.  Package names, class names, and method names are subject to change.  As we work to make the sdk better we are not concerned with breaking backwards compatibility for now.  This will change in the future as the sdk becomes more stable.
@@ -6,7 +6,7 @@ Be aware that the Singly Android Client is in an alpha state.  Package names, cl
 ## Overview
 This repository contains two different Android projects.  The first is the Singly Android client library.  This is a library project you can include into your Android apps that makes it easy to use the Singly API.  The second in an example Android project that show useage of the Singly client.
 
-The Singly Android client is a library supporting the [Singly](https://singly.com) social API that will let you
+The Singly Android client is a library supporting the [Singly](https://singly.com) social API that will:
 
   - Allow users to easily authenticate with any service supported by Singly; for example Facebook, Twitter, Github, Foursquare and others
   - Make requests to the Singly API to retrieve your users' social data for use in your app
@@ -16,18 +16,28 @@ The library code is contained in the SinglyAndroidSDK project in the sdk folder.
 
 Sample implementations are contained in the SinglyAndroidExamples project in the examples.  The com.singly.android.examples.MainActivity and ProfilesActivity show usage of the SinglyClient class to authenticate and perform API calls.
 
-## Registering Your Singly App
+## Using the Singly Android SDK
 
-In order to use the Android client you will need to do the following:
+The flow of using the SDK is as follows
 
 1. Go to https://singly.com and register or login.
 2. Create your app or use the default app.
-3. Get the client id and client secret for your app.  
-4. If using the examples, copy and past the client id and client secret into the SinglyClient constructor at the top of the MainActivity and ProfilesActivity classes in the Singly Android Example project.
-5. If creating your own Andorid app, use the client id and client secret in the SinglyClient constructor.
-
+3. Get the client id and client secret for your app.
+4. Set your client id and client secret in the SinglyClient private constructor.  This is in the source code of the Singly Android SDK library.
+5. Register the AuthenticationActivity in your AndroidManifest.xml file.
+6. Get an instance of the SinglyClient using the SinglyClient.getInstance() method.
+7. Authenticate a user against one or more services that singly supports.  This gives you a singly access token.
+8. Call Singly API methods.
 
 ## Using the Android Client
+
+### Setting Your Singly Keys
+You will also need to setup your Singly app client id and client secret.  This is set in the source code of the Singly Android SDK library.  Go to the com.singly.android.client.SinglyClient class and in the private constructor you will see two lines like this:
+
+    this.clientId = "your_client_id";
+    this.clientSecret = "your_client_secret";
+
+You will need to change those two lines to be your client id and client secret.  Follow the Singly app registration process described above to obtain your client id and client secret. 
 
 ### AuthenticationActivity
 To use the SinglyClient you will need to register the com.singly.android.client.AuthenticationActivity class as an activity in your AndroidManifest.xml file.  It will look like this:
@@ -35,9 +45,11 @@ To use the SinglyClient you will need to register the com.singly.android.client.
     <activity android:name="com.singly.android.client.AuthenticationActivity" />
 
 ### Instantiating the SinglyClient
-Next your will need to create the SinglyClient class as shown below.  Follow the Singly app registration process described above to obtain your client id and client secret. 
+Once you have set your client id and client secret you can obtain an instance of the SinglyClient using the getInstance method. 
 
-    SinglyClient api = new SinglyClient("your_client_id", "your_client_secret");
+    SinglyClient api = SinglyClient.getInstance();
+
+The SinglyClient is a singleton.  Only one instance of the client is used throughout an Android application.
 
 ### Authenticate the User
 To access the Singly API your user must first authenticate with one or more services that Singly supports.  This is done through the `authenticate()` method of the SinglyClient class.  The authenticate method will launch an AuthenticationActivity that handles authenticating the user with the service.  The current Android context and a service name to authenticate against are passed in.  You can replace the service name "facebook" with [any service Singly supports](https://singly.com/docs)

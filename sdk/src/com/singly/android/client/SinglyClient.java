@@ -1,5 +1,6 @@
 package com.singly.android.client;
 
+import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -8,6 +9,7 @@ import org.apache.http.entity.ByteArrayEntity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.util.Log;
 
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
@@ -21,20 +23,35 @@ import com.singly.android.util.SinglyUtils;
  */
 public class SinglyClient {
 
+  private static final String TAG = SinglyClient.class.getSimpleName();
+  private static SinglyClient instance = null;
+
   private String clientId;
   private String clientSecret;
+  private Class authenticationActivity = AuthenticationActivity.class;
+
+  private SinglyClient()
+    throws IOException {
+    
+    this.clientId = "your_client_id";
+    this.clientSecret = "your_client_secret";
+  }
 
   /**
-   * Creates a new SinglyClient instance using the context, Singly client id, 
-   * and Singly client secret passed.
-   * 
-   * @param clientId The Singly client id.
-   * @param clientSecret The Singly client secret.
+   * Returns an instance of the SinglyClient singleton.  It creates an instance
+   * of the SinglyClient if one did not previously exist.
    */
-  public SinglyClient(String clientId, String clientSecret) {
-
-    this.clientId = clientId;
-    this.clientSecret = clientSecret;
+  public static SinglyClient getInstance() {
+    if (instance == null) {
+      try {
+        instance = new SinglyClient();
+      }
+      catch (IOException e) {
+        instance = null;
+        Log.e(TAG, "Error loading singly.properties", e);
+      }
+    }
+    return instance;
   }
 
   /**
@@ -64,12 +81,18 @@ public class SinglyClient {
    * preferences under the key accessToken.  This access token will then be
    * used when making api callas.
    * 
+   * Expert: The Activity class that handles the authentication process can be
+   * changed by calling the {@link #setAuthenticationActivity(Class)} method. 
+   * The assumption is that the new Activity will store the Singly access token 
+   * by using {@link SinglyUtils#saveAccessToken(Context, String)} method upon a
+   * successful authentication with the service.
+   * 
    * @param context The context from which authenticate is called.
    * @param service The service to authenticate the user against.
    */
   public void authenticate(Context context, String service) {
 
-    Intent authIntent = new Intent(context, AuthenticationActivity.class);
+    Intent authIntent = new Intent(context, authenticationActivity);
     authIntent.putExtra("clientId", clientId);
     authIntent.putExtra("clientSecret", clientSecret);
     authIntent.putExtra("service", service);
@@ -115,7 +138,7 @@ public class SinglyClient {
       params.putAll(queryParams);
     }
     String getApiCallUrl = SinglyUtils.createSinglyURL(apiEndpoint);
-    
+
     // do an async get request
     client.get(getApiCallUrl, new RequestParams(params),
       new AsyncHttpResponseHandler() {
@@ -171,7 +194,7 @@ public class SinglyClient {
       params.putAll(queryParams);
     }
     String postApiCallUrl = SinglyUtils.createSinglyURL(apiEndpoint);
-    
+
     // do an async post request
     client.post(postApiCallUrl, new RequestParams(params),
       new AsyncHttpResponseHandler() {
@@ -249,6 +272,30 @@ public class SinglyClient {
           responseHandler.onFailure(error);
         }
       });
+  }
+
+  public String getClientId() {
+    return clientId;
+  }
+
+  public void setClientId(String clientId) {
+    this.clientId = clientId;
+  }
+
+  public String getClientSecret() {
+    return clientSecret;
+  }
+
+  public void setClientSecret(String clientSecret) {
+    this.clientSecret = clientSecret;
+  }
+
+  public Class getAuthenticationActivity() {
+    return authenticationActivity;
+  }
+
+  public void setAuthenticationActivity(Class authenticationActivity) {
+    this.authenticationActivity = authenticationActivity;
   }
 
 }
