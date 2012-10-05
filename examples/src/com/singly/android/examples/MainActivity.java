@@ -20,7 +20,9 @@ public class MainActivity
 
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
-    singlyClient = new SinglyClient("your_client_id", "your_client_secret");
+
+    // get an instance of the singly client
+    singlyClient = SinglyClient.getInstance();
 
     Button facebookButton = (Button)findViewById(R.id.facebook);
     facebookButton.setOnClickListener(new View.OnClickListener() {

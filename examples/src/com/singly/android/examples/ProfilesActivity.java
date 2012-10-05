@@ -28,8 +28,10 @@ public class ProfilesActivity
 
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_profiles);
-    singlyClient = new SinglyClient("your_client_id", "your_client_secret");
 
+    // get an instance of the singly client
+    singlyClient = SinglyClient.getInstance();
+    
     singlyClient.doGetApiRequest(this, "/profiles", null,
       new AsyncApiResponseHandler() {
 
