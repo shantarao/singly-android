@@ -32,7 +32,7 @@ public class SinglyClient {
 
   private SinglyClient()
     throws IOException {
-    
+
     this.clientId = "your_client_id";
     this.clientSecret = "your_client_secret";
   }
@@ -116,43 +116,37 @@ public class SinglyClient {
    * @param responseHandler An asynchronous callback handler for the request.
    * 
    * @see https://singly.com/docs/api For documentation on Singly api calls.
-   * 
-   * @throws IllegalStateException if no access token is found, meaning the 
-   * client has not been authenticated.
    */
   public void doGetApiRequest(Context context, String apiEndpoint,
     Map<String, String> queryParams,
     final AsyncApiResponseHandler responseHandler) {
 
-    // fail if no access token
-    String accessToken = SinglyUtils.getAccessToken(context);
-    if (accessToken == null) {
-      throw new IllegalStateException("No access token found");
-    }
-
     // get the http client and add api url
     AsyncHttpClient client = new AsyncHttpClient();
     Map<String, String> params = new LinkedHashMap<String, String>();
-    params.put("access_token", accessToken);
+    String accessToken = SinglyUtils.getAccessToken(context);
+    if (accessToken != null) {
+      params.put("access_token", accessToken);
+    }
     if (queryParams != null) {
       params.putAll(queryParams);
     }
     String getApiCallUrl = SinglyUtils.createSinglyURL(apiEndpoint);
+    RequestParams rparms = params.isEmpty() ? null : new RequestParams(params);
 
     // do an async get request
-    client.get(getApiCallUrl, new RequestParams(params),
-      new AsyncHttpResponseHandler() {
+    client.get(getApiCallUrl, rparms, new AsyncHttpResponseHandler() {
 
-        @Override
-        public void onSuccess(String response) {
-          responseHandler.onSuccess(response);
-        }
+      @Override
+      public void onSuccess(String response) {
+        responseHandler.onSuccess(response);
+      }
 
-        @Override
-        public void onFailure(Throwable error) {
-          responseHandler.onFailure(error);
-        }
-      });
+      @Override
+      public void onFailure(Throwable error) {
+        responseHandler.onFailure(error);
+      }
+    });
   }
 
   /**
@@ -172,43 +166,37 @@ public class SinglyClient {
    * @param responseHandler An asynchronous callback handler for the request.
    * 
    * @see https://singly.com/docs/api For documentation on Singly api calls.
-   * 
-   * @throws IllegalStateException if no access token is found, meaning the 
-   * client has not been authenticated.
    */
   public void doPostApiRequest(Context context, String apiEndpoint,
     Map<String, String> queryParams,
     final AsyncApiResponseHandler responseHandler) {
 
-    // fail if no access token
-    String accessToken = SinglyUtils.getAccessToken(context);
-    if (accessToken == null) {
-      throw new IllegalStateException("No access token found");
-    }
-
     // get the http client and add api url
     AsyncHttpClient client = new AsyncHttpClient();
     Map<String, String> params = new LinkedHashMap<String, String>();
-    params.put("access_token", accessToken);
+    String accessToken = SinglyUtils.getAccessToken(context);
+    if (accessToken != null) {
+      params.put("access_token", accessToken);
+    }
     if (queryParams != null) {
       params.putAll(queryParams);
     }
     String postApiCallUrl = SinglyUtils.createSinglyURL(apiEndpoint);
+    RequestParams rparms = params.isEmpty() ? null : new RequestParams(params);
 
     // do an async post request
-    client.post(postApiCallUrl, new RequestParams(params),
-      new AsyncHttpResponseHandler() {
+    client.post(postApiCallUrl, rparms, new AsyncHttpResponseHandler() {
 
-        @Override
-        public void onSuccess(String response) {
-          responseHandler.onSuccess(response);
-        }
+      @Override
+      public void onSuccess(String response) {
+        responseHandler.onSuccess(response);
+      }
 
-        @Override
-        public void onFailure(Throwable error) {
-          responseHandler.onFailure(error);
-        }
-      });
+      @Override
+      public void onFailure(Throwable error) {
+        responseHandler.onFailure(error);
+      }
+    });
   }
 
   /**
@@ -235,24 +223,18 @@ public class SinglyClient {
    * @param responseHandler An asynchronous callback handler for the request.
    * 
    * @see https://singly.com/docs/api For documentation on Singly api calls.
-   * 
-   * @throws IllegalStateException if no access token is found, meaning the 
-   * client has not been authenticated.
    */
   public void doBodyApiRequest(Context context, String apiEndpoint,
     Map<String, String> queryParams, byte[] body, String contentType,
     final AsyncApiResponseHandler responseHandler) {
 
-    // fail if no access token
-    String accessToken = SinglyUtils.getAccessToken(context);
-    if (accessToken == null) {
-      throw new IllegalStateException("No access token found");
-    }
-
     // get the http client and add api url
     AsyncHttpClient client = new AsyncHttpClient();
     Map<String, String> params = new LinkedHashMap<String, String>();
-    params.put("access_token", accessToken);
+    String accessToken = SinglyUtils.getAccessToken(context);
+    if (accessToken != null) {
+      params.put("access_token", accessToken);
+    }
     if (queryParams != null) {
       params.putAll(queryParams);
     }

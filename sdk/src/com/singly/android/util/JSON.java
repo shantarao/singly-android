@@ -179,6 +179,9 @@ public class JSON {
    * Gets the fields from the JSONObject node and turns them into a Map of name 
    * to JSONObject values.
    * 
+   * The Map is a LinkedHashMap returned implementation.  Children are returned
+   * in the order in which they appear.
+   * 
    * @param node The node from which to retrieve the fields.
    * 
    * @return A map of name to JSONObject values for the fields of the node.
