@@ -1,18 +1,25 @@
 package com.singly.android.util;
 
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.Map;
+import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.utils.URIUtils;
 
 /**
  * Utility methods for creating and manipulating URLs.
  */
 public class URLUtils {
+
+  private static Pattern IP_PATTERN = Pattern
+    .compile("(\\d{1,3}\\.){3}(\\d{1,3})");
 
   private static final String PARAMETER_SEPARATOR = "&";
   private static final String NAME_VALUE_SEPARATOR = "=";
@@ -107,4 +114,107 @@ public class URLUtils {
     }
   }
 
+  /**
+   * Returns an array of the segments of a hostname for a url.
+   * 
+   * @param url The url to get the host segments for.
+   * 
+   * @return An array of hostname segments for the url.
+   */
+  public static String[] getHostSegments(URL url) {
+    String host = url.getHost();
+    if (IP_PATTERN.matcher(host).matches())
+      return new String[] {
+        host
+      };
+    return host.split("\\.");
+  }
+  
+  /**
+   * Returns an array of the segments of a hostname for a url.
+   * 
+   * @param url The String url to get the host segments for.
+   * 
+   * @return An array of hostname segments for the url.
+   */
+  public static String[] getHostSegments(String url)
+    throws MalformedURLException {
+    return getHostSegments(new URL(url));
+  }
+
+  /**
+   * Returns the hostname for the url.
+   * 
+   * @param url The starting url.
+   * 
+   * @return The url hostname.
+   */
+  public static String getHost(String url) {
+    try {
+      return new URL(url).getHost().toLowerCase();
+    }
+    catch (MalformedURLException e) {
+      return null;
+    }
+  }
+
+  /**
+   * Returns the page of the url with the query string removed.
+   * 
+   * @param url The starting url.
+   * 
+   * @return The url with the query string removed.
+   */
+  public static String getPage(String url) {
+    try {
+      url = url.toLowerCase();
+      String queryStr = new URL(url).getQuery();
+      return (queryStr != null) ? url.replace("?" + queryStr, "") : url;
+    }
+    catch (MalformedURLException e) {
+      return null;
+    }
+  }
+
+  /**
+   * Returns the protocol of the url.
+   * 
+   * @param url The starting url.
+   * 
+   * @return The url protocol.
+   */
+  public static String getProtocol(String url) {
+    try {
+      url = url.toLowerCase();
+      String protocolStr = new URL(url).getProtocol();
+      return protocolStr;
+    }
+    catch (MalformedURLException e) {
+      return null;
+    }
+  }
+
+  /**
+   * Returns a String version of the URL with the protocol removed.
+   * 
+   * @param url The starting url.
+   * 
+   * @return The url with the protocol removed.
+   */
+  public static String stripProtocol(String url) {
+    try {
+      url = url.toLowerCase();
+      String protocolStr = new URL(url).getProtocol();
+      return (protocolStr != null) ? url.replace(protocolStr + "://", "") : url;
+    }
+    catch (MalformedURLException e) {
+      return null;
+    }
+  }
+
+  public static String getExtension(String filename) {
+    int extIndex = StringUtils.lastIndexOf(filename, ".");
+    return extIndex > 0 && extIndex + 1 < filename.length() ? StringUtils
+      .substring(filename, extIndex + 1) : null;
+  }
 }
