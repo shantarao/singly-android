@@ -9,6 +9,7 @@ import org.apache.http.entity.ByteArrayEntity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Bundle;
 import android.util.Log;
 
 import com.loopj.android.http.AsyncHttpClient;
@@ -79,7 +80,7 @@ public class SinglyClient {
    * user with the service. If the user successfully authenticates with the 
    * service then the Singly access token will be placed into the shared 
    * preferences under the key accessToken.  This access token will then be
-   * used when making api callas.
+   * used when making api calls.
    * 
    * Expert: The Activity class that handles the authentication process can be
    * changed by calling the {@link #setAuthenticationActivity(Class)} method. 
@@ -89,13 +90,26 @@ public class SinglyClient {
    * 
    * @param context The context from which authenticate is called.
    * @param service The service to authenticate the user against.
+   * @param authExtra Any optional extra parameters used in oauth of services.
+   * This includes scope and flag parameters.
    */
-  public void authenticate(Context context, String service) {
+  public void authenticate(Context context, String service,
+    Map<String, String> authExtra) {
 
     Intent authIntent = new Intent(context, authenticationActivity);
     authIntent.putExtra("clientId", clientId);
     authIntent.putExtra("clientSecret", clientSecret);
     authIntent.putExtra("service", service);
+
+    // convert any extra authentication parameters into a bundle
+    if (authExtra != null && !authExtra.isEmpty()) {
+      Bundle bundle = new Bundle();
+      for (Map.Entry<String, String> entry : authExtra.entrySet()) {
+        bundle.putString(entry.getKey(), entry.getValue());
+      }
+      authIntent.putExtra("authExtra", bundle);
+    }
+
     context.startActivity(authIntent);
   }
 
@@ -110,12 +124,16 @@ public class SinglyClient {
    * success the response from the API is returned.  On failure a Throwable 
    * error object will be returned.
    * 
+   * If an API call requires an access token it must be added to the queryParams
+   * passed into the method.
+   * 
    * @param context The current android context.
    * @param apiEndpoint The Singly API endpoint to call.
    * @param queryParams Any query parameters to send along with the request.
    * @param responseHandler An asynchronous callback handler for the request.
    * 
    * @see https://singly.com/docs/api For documentation on Singly api calls.
+   * @see SinglyUtils#getAccessToken(Context)
    */
   public void doGetApiRequest(Context context, String apiEndpoint,
     Map<String, String> queryParams,
@@ -124,10 +142,6 @@ public class SinglyClient {
     // get the http client and add api url
     AsyncHttpClient client = new AsyncHttpClient();
     Map<String, String> params = new LinkedHashMap<String, String>();
-    String accessToken = SinglyUtils.getAccessToken(context);
-    if (accessToken != null) {
-      params.put("access_token", accessToken);
-    }
     if (queryParams != null) {
       params.putAll(queryParams);
     }
@@ -160,12 +174,16 @@ public class SinglyClient {
    * success the response from the API is returned.  On failure a Throwable 
    * error object will be returned.
    * 
+   * If an API call requires an access token it must be added to the queryParams
+   * passed into the method.
+   * 
    * @param context The current android context.
    * @param apiEndpoint The Singly API endpoint to call.
    * @param queryParams Any query parameters to send along with the request.
    * @param responseHandler An asynchronous callback handler for the request.
    * 
    * @see https://singly.com/docs/api For documentation on Singly api calls.
+   * @see SinglyUtils#getAccessToken(Context)
    */
   public void doPostApiRequest(Context context, String apiEndpoint,
     Map<String, String> queryParams,
@@ -174,10 +192,6 @@ public class SinglyClient {
     // get the http client and add api url
     AsyncHttpClient client = new AsyncHttpClient();
     Map<String, String> params = new LinkedHashMap<String, String>();
-    String accessToken = SinglyUtils.getAccessToken(context);
-    if (accessToken != null) {
-      params.put("access_token", accessToken);
-    }
     if (queryParams != null) {
       params.putAll(queryParams);
     }
@@ -215,6 +229,9 @@ public class SinglyClient {
    * success the response from the API is returned.  On failure a Throwable 
    * error object will be returned.
    * 
+   * If an API call requires an access token it must be added to the queryParams
+   * passed into the method.
+   * 
    * @param context The current android context.
    * @param apiEndpoint The Singly API endpoint to call.
    * @param queryParams Any query parameters to send along with the request.
@@ -223,6 +240,7 @@ public class SinglyClient {
    * @param responseHandler An asynchronous callback handler for the request.
    * 
    * @see https://singly.com/docs/api For documentation on Singly api calls.
+   * @see SinglyUtils#getAccessToken(Context)
    */
   public void doBodyApiRequest(Context context, String apiEndpoint,
     Map<String, String> queryParams, byte[] body, String contentType,
@@ -231,10 +249,6 @@ public class SinglyClient {
     // get the http client and add api url
     AsyncHttpClient client = new AsyncHttpClient();
     Map<String, String> params = new LinkedHashMap<String, String>();
-    String accessToken = SinglyUtils.getAccessToken(context);
-    if (accessToken != null) {
-      params.put("access_token", accessToken);
-    }
     if (queryParams != null) {
       params.putAll(queryParams);
     }

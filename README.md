@@ -72,6 +72,12 @@ Once a user has authenticated with a service you will be able to make api calls 
 
 For more information on available Singly api calls check out our [API Overview](https://singly.com/docs/api).
 
+## Java SDK
+
+If you are building a Java desktop or web application, not an Android app, it is better to use the Singly SDK for Java.
+
+https://github.com/Singly/singly-java
+
 Support
 --------------
 
