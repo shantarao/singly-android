@@ -26,32 +26,30 @@ import com.singly.android.util.SinglyUtils;
  * Activity that handles Singly authentication to various services by opening
  * WebViews and performing oauth.
  * 
- * Three values must be passed into the activity by the Intent that started it.
+ * Four values must be passed into the activity by the Intent that started it.
  * 
  * <ol>
  *   <li>clientId - Holding the Singly app client id.</li>
  *   <li>clientSecret - Holding the Singly app client secret.</li>
  *   <li>service - The name of the service to authenticate the user
  *   against (i.e. facebook)</li>
+ *   <li>authExtra - An optional map of extra authentication parameters in a
+ *   Bundle.  This include parameters such as scope and flag.</li>
  * </ol>    
  * 
- * The AuthenticationActivity opens a WebView to the authentication
- * service.  The user then authenticates through a standard oauth process.
- * Once authenticated the Singly access token is retrieved and stored in the
- * Singly shared preferences for the app.  The access token is then used to 
- * make calls to the Singly API.
- * 
- * A progress dialog is shown as the authentication webpage is loading.
- * 
- * Once the access token is saved upon successful authentication or in the case 
- * of the URL erroring, the AuthenticationActivity is finished.
- * 
+ * The AuthenticationActivity performs the authentication process on a service.  
  * The full authentication process is three steps.  One, open a WebView to the
  * service for the user to authenticate.  Two, once the user authenticates the
  * WebView is redirected to the success URL with the authentication code as a 
  * query parameter.  Three, the authentication code is parsed from the 
  * success URL and a call is made to retrieve the access token.  The access 
- * token is then stored and used to make calls to the Singly API.
+ * token is then stored in the shared preferences of the app and it can be 
+ * retrieved to make calls to the Singly API.
+ * 
+ * A progress dialog is shown as the authentication webpage is loading.
+ * 
+ * Once the access token is saved upon successful authentication or in the case 
+ * of the URL erroring, the AuthenticationActivity is finished.
  * 
  * Expert: The AuthenticationActivity handles all authentication steps. If you 
  * need a more fine grained control of the authentication process, the 
@@ -78,6 +76,7 @@ public class AuthenticationActivity
   private String clientId;
   private String clientSecret;
   private String service;
+  private Bundle authExtra;
   private Context context;
 
   private class AuthenticationWebViewClient
@@ -175,6 +174,7 @@ public class AuthenticationActivity
     this.clientId = intent.getStringExtra("clientId");
     this.clientSecret = intent.getStringExtra("clientSecret");
     this.service = intent.getStringExtra("service");
+    this.authExtra = intent.getBundleExtra("authExtra");
 
     // if the client id, client secret, or service are not passed then the
     // activity immediately exits
@@ -187,6 +187,16 @@ public class AuthenticationActivity
     qparams.put("client_id", clientId);
     qparams.put("redirect_uri", SUCCESS_REDIRECT);
     qparams.put("service", service);
+
+    // add in scope and flag parameters if present
+    if (authExtra != null) {
+      if (authExtra.containsKey("scope")) {
+        qparams.put("scope", authExtra.getString("scope"));
+      }
+      if (authExtra.containsKey("flag")) {
+        qparams.put("flag", authExtra.getString("flag"));
+      }
+    }
 
     // create the authentication url
     String authUrl = SinglyUtils.createSinglyURL("/oauth/authorize", qparams);

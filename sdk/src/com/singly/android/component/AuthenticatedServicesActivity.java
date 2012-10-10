@@ -3,11 +3,13 @@ package com.singly.android.component;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -20,6 +22,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
@@ -40,6 +43,7 @@ import com.singly.android.client.AsyncApiResponseHandler;
 import com.singly.android.client.SinglyClient;
 import com.singly.android.sdk.R;
 import com.singly.android.util.JSON;
+import com.singly.android.util.SinglyUtils;
 
 /**
  * An Activity that shows which Singly service a user is authenticated against
@@ -56,15 +60,29 @@ import com.singly.android.util.JSON;
  * Clicking a checked row will open a dialog that allows the user to choose to
  * remove authentication for the service.  If accepted the Singly profile for 
  * the user for that service is deleted.
+ * 
+ * Different values can be passed in as intent extra information to change the
+ * behavior of the AuthenticatedServicesActivity component.  They are:
+ * 
+ * <ol>
+ *   <li>scopes - A bundle of service name to oauth scope parameter.</li>
+ *   <li>flags - A bundle of service name to oauth flag parameter.</li>
+ *   <li>includes - An array of the service names to include.  Only those
+ *   services specified will be displayed.  If not set all services Singly 
+ *   provides authentication for are displayed.</li>
+ * </ol>   
  */
 public class AuthenticatedServicesActivity
   extends Activity {
 
+  private Context context;
   private SinglyClient singlyClient;
   private SinglyServicesAdapter servicesAdapter;
   private AsyncHttpClient httpClient = new AsyncHttpClient();
 
+  // list of populated Singly services
   private List<SinglyService> services = new ArrayList<SinglyService>();
+  private Set<String> includedServices = new HashSet<String>();
 
   // Map of service to user id on the service, set of authenticated services
   private Map<String, String> serviceIds = new HashMap<String, String>();
@@ -76,7 +94,6 @@ public class AuthenticatedServicesActivity
   private static class SinglyService {
     String id;
     String name;
-    String desc;
     Map<String, String> icons;
     Bitmap iconBitmap;
   }
@@ -162,8 +179,15 @@ public class AuthenticatedServicesActivity
       return;
     }
 
+    // get the access token and pass it in as a query parameter
+    Map<String, String> qparams = new LinkedHashMap<String, String>();
+    String accessToken = SinglyUtils.getAccessToken(context);
+    if (accessToken != null) {
+      qparams.put("access_token", accessToken);
+    }
+
     // get all the services the user is authenticated against
-    singlyClient.doGetApiRequest(this, "/profiles", null,
+    singlyClient.doGetApiRequest(this, "/profiles", qparams,
       new AsyncApiResponseHandler() {
 
         @Override
@@ -217,8 +241,7 @@ public class AuthenticatedServicesActivity
             try {
 
               // get the location in internal storage of the file
-              Context appContext = AuthenticatedServicesActivity.this
-                .getApplicationContext();
+              Context appContext = context.getApplicationContext();
               File dataDir = appContext.getFilesDir();
               File singlyStorage = new File(dataDir, "singly");
 
@@ -255,8 +278,7 @@ public class AuthenticatedServicesActivity
       try {
 
         // get the location in internal storage of the file
-        Context appContext = AuthenticatedServicesActivity.this
-          .getApplicationContext();
+        Context appContext = context.getApplicationContext();
         File dataDir = appContext.getFilesDir();
         File singlyStorage = new File(dataDir, "singly");
         File serviceIcon = new File(singlyStorage, service.id + ".img");
@@ -280,6 +302,20 @@ public class AuthenticatedServicesActivity
 
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_authenticated_services);
+
+    // set the context and any scopes specified
+    this.context = this;
+    Intent intent = getIntent();
+
+    // scopes and flags parameters for each service
+    final Bundle oauthScopes = intent.getBundleExtra("scopes");
+    final Bundle oauthFlags = intent.getBundleExtra("flags");
+
+    // setup a service inclusion list if needed
+    String[] includesAr = intent.getStringArrayExtra("includes");
+    if (includesAr != null && includesAr.length > 0) {
+      includedServices.addAll(Arrays.asList(includesAr));
+    }
 
     // get an instance of the singly client
     singlyClient = SinglyClient.getInstance();
@@ -328,10 +364,15 @@ public class AuthenticatedServicesActivity
                 String serviceUserId = serviceIds.get(serviceId);
                 qparams.put("delete", serviceUserId + "@" + serviceId);
 
+                // add the access token
+                String accessToken = SinglyUtils.getAccessToken(context);
+                if (accessToken != null) {
+                  qparams.put("access_token", accessToken);
+                }
+
                 // success means the user is no longer authenticated in Singly
                 // for that service
-                singlyClient.doPostApiRequest(
-                  AuthenticatedServicesActivity.this, "/profiles", qparams,
+                singlyClient.doPostApiRequest(context, "/profiles", qparams,
                   new AsyncApiResponseHandler() {
 
                     @Override
@@ -355,10 +396,18 @@ public class AuthenticatedServicesActivity
               }
               else {
 
+                // get oauth scope and flag
+                Map<String, String> authExtra = new LinkedHashMap<String, String>();
+                if (oauthScopes != null) {
+                  authExtra.put("scope", oauthScopes.getString(serviceId));
+                }
+                if (oauthFlags != null) {
+                  authExtra.put("flag", oauthFlags.getString(serviceId));
+                }
+
                 // not authenticated, follow the normal authentication process
                 // via an AuthenticationActivity
-                singlyClient.authenticate(AuthenticatedServicesActivity.this,
-                  serviceId);
+                singlyClient.authenticate(context, serviceId, authExtra);
               }
             }
           });
@@ -378,6 +427,7 @@ public class AuthenticatedServicesActivity
 
   @Override
   protected void onStart() {
+
     super.onStart();
 
     // do a call to singly to get all the available services
@@ -389,6 +439,7 @@ public class AuthenticatedServicesActivity
 
           // new list of services
           List<SinglyService> curServices = new ArrayList<SinglyService>();
+          boolean onlyIncluded = !includedServices.isEmpty();
 
           // parse all the services JSON response into a map of id to object
           Map<String, JSONObject> allServices = JSON.children(JSON
@@ -401,8 +452,11 @@ public class AuthenticatedServicesActivity
             singlyService.id = entry.getKey();
             singlyService.name = StringUtils.capitalize(JSON.getString(
               curServiceObj, "name", null));
-            singlyService.desc = JSON.getString(curServiceObj, "description",
-              null);
+
+            // if we have an include set only use services in the set
+            if (onlyIncluded && !includedServices.contains(singlyService.id)) {
+              continue;
+            }
 
             // create a map of the icons and their sizes
             Map<String, String> icons = new HashMap<String, String>();
@@ -416,6 +470,8 @@ public class AuthenticatedServicesActivity
             }
             singlyService.icons = icons;
 
+            // if possible retrieve a previously downloaded icon, if not then
+            // download and store it in an async manner
             getIconFromLocalStorage(singlyService);
             if (singlyService.iconBitmap == null) {
               downloadIcon(singlyService);

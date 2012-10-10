@@ -1,0 +1,24 @@
+<RelativeLayout
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:padding="8dp"
+  xmlns:tools="http://schemas.android.com/tools">
+
+  <Button
+    android:id="@+id/fullAuthButton"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:layout_alignParentLeft="true"
+    android:layout_alignParentTop="true"
+    android:text="@string/button_auth_services" />
+  
+  <Button
+    android:id="@+id/limitedAuthdButton"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:layout_alignLeft="@+id/fullAuthButton"
+    android:layout_below="@+id/fullAuthButton"
+    android:text="@string/button_auth_services_limited" />
+
+</RelativeLayout>

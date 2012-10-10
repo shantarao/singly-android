@@ -22,15 +22,17 @@
     <activity android:name="com.singly.android.client.AuthenticationActivity" />
 
     <!-- Singly component shows authenticated services -->
+    <activity android:name="com.singly.android.component.AuthenticatedServicesActivity" />
+    
+    <!-- Main activity for launching examples -->
     <activity
-      android:name="com.singly.android.component.AuthenticatedServicesActivity"
-      android:label="@string/title_activity_authenticated_services">
+      android:name=".MainActivity"
+      android:label="@string/title_activity_main">
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
         <category android:name="android.intent.category.LAUNCHER" />
       </intent-filter>
     </activity>
-
   </application>
 
 </manifest>
