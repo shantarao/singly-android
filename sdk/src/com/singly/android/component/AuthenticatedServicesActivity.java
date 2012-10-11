@@ -8,15 +8,14 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.json.JSONObject;
+import org.apache.commons.lang.StringUtils;
+import org.codehaus.jackson.JsonNode;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -42,7 +41,7 @@ import com.loopj.android.http.BinaryHttpResponseHandler;
 import com.singly.android.client.AsyncApiResponseHandler;
 import com.singly.android.client.SinglyClient;
 import com.singly.android.sdk.R;
-import com.singly.android.util.JSON;
+import com.singly.android.util.JSONUtils;
 import com.singly.android.util.SinglyUtils;
 
 /**
@@ -195,14 +194,14 @@ public class AuthenticatedServicesActivity
 
           // get the set of services from the response and populate the service
           // to user id mapping
-          JSONObject jsonObj = JSON.parse(response);
-          for (Iterator iter = jsonObj.keys(); iter.hasNext();) {
-            String profile = (String)iter.next();
-            if (!profile.equals("id")) {
-              authServices.add(profile);
-              List<String> profileIds = JSON.getStrings(jsonObj, profile);
+          JsonNode root = JSONUtils.parse(response);
+          List<String> profileNames = JSONUtils.getFieldnames(root);
+          for (String profileName : profileNames) {
+            if (!profileName.equals("id")) {
+              authServices.add(profileName);
+              List<String> profileIds = JSONUtils.getStrings(root, profileName);
               if (profileIds != null && !profileIds.isEmpty()) {
-                serviceIds.put(profile, profileIds.get(0));
+                serviceIds.put(profileName, profileIds.get(0));
               }
             }
           }
@@ -370,8 +369,8 @@ public class AuthenticatedServicesActivity
                   qparams.put("access_token", accessToken);
                 }
 
-                // success means the user is no longer authenticated in Singly
-                // for that service
+                // this calls a profile delete, success means the user is no
+                // longer authenticated with the service
                 singlyClient.doPostApiRequest(context, "/profiles", qparams,
                   new AsyncApiResponseHandler() {
 
@@ -441,17 +440,18 @@ public class AuthenticatedServicesActivity
           List<SinglyService> curServices = new ArrayList<SinglyService>();
           boolean onlyIncluded = !includedServices.isEmpty();
 
-          // parse all the services JSON response into a map of id to object
-          Map<String, JSONObject> allServices = JSON.children(JSON
-            .parse(response));
-          for (Map.Entry<String, JSONObject> entry : allServices.entrySet()) {
+          JsonNode rootNode = JSONUtils.parse(response);
+          Map<String, JsonNode> serviceNodes = JSONUtils.getFields(rootNode);
+
+          // loop through the service name to objects
+          for (Map.Entry<String, JsonNode> entry : serviceNodes.entrySet()) {
 
             // parse and add the service to the services list
-            JSONObject curServiceObj = entry.getValue();
+            JsonNode serviceNode = entry.getValue();
             SinglyService singlyService = new SinglyService();
             singlyService.id = entry.getKey();
-            singlyService.name = StringUtils.capitalize(JSON.getString(
-              curServiceObj, "name", null));
+            singlyService.name = StringUtils.capitalize(JSONUtils.getString(
+              serviceNode, "name"));
 
             // if we have an include set only use services in the set
             if (onlyIncluded && !includedServices.contains(singlyService.id)) {
@@ -460,11 +460,12 @@ public class AuthenticatedServicesActivity
 
             // create a map of the icons and their sizes
             Map<String, String> icons = new HashMap<String, String>();
-            List<JSONObject> iconObjs = JSON.getValues(curServiceObj, "icons");
-            for (JSONObject iconObj : iconObjs) {
-              int height = JSON.getInt(iconObj, "height", -1);
-              int width = JSON.getInt(iconObj, "width", -1);
-              String source = JSON.getString(iconObj, "source", null);
+            List<JsonNode> iconNodes = JSONUtils.getJsonNodes(serviceNode,
+              "icons");
+            for (JsonNode iconNode : iconNodes) {
+              int height = JSONUtils.getInt(iconNode, "height");
+              int width = JSONUtils.getInt(iconNode, "width");
+              String source = JSONUtils.getString(iconNode, "source");
               String key = height + "x" + width;
               icons.put(key, source);
             }
