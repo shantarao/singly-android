@@ -1,6 +1,5 @@
 package com.singly.android.client;
 
-import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -10,7 +9,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log;
 
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
@@ -24,16 +22,13 @@ import com.singly.android.util.SinglyUtils;
  */
 public class SinglyClient {
 
-  private static final String TAG = SinglyClient.class.getSimpleName();
   private static SinglyClient instance = null;
 
   private String clientId;
   private String clientSecret;
   private Class authenticationActivity = AuthenticationActivity.class;
 
-  private SinglyClient()
-    throws IOException {
-
+  private SinglyClient() {
     this.clientId = "your_client_id";
     this.clientSecret = "your_client_secret";
   }
@@ -44,13 +39,7 @@ public class SinglyClient {
    */
   public static SinglyClient getInstance() {
     if (instance == null) {
-      try {
-        instance = new SinglyClient();
-      }
-      catch (IOException e) {
-        instance = null;
-        Log.e(TAG, "Error loading singly.properties", e);
-      }
+      instance = new SinglyClient();
     }
     return instance;
   }
