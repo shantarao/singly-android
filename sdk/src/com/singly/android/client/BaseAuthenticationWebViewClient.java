@@ -8,7 +8,7 @@ import android.webkit.WebViewClient;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
-import com.singly.android.util.JSONUtils;
+import com.singly.android.util.JSON;
 import com.singly.android.util.SinglyUtils;
 
 /**
@@ -55,8 +55,8 @@ public abstract class BaseAuthenticationWebViewClient
 
         // get the access token and put it into the shared preferences
         if (response != null) {
-          JsonNode root = JSONUtils.parse(response);
-          String accessToken = JSONUtils.getString(root, "access_token");
+          JsonNode root = JSON.parse(response);
+          String accessToken = JSON.getString(root, "access_token");
           SinglyUtils.saveAccessToken(context, accessToken);
         }
 

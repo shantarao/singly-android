@@ -14,11 +14,19 @@
     android:text="@string/button_auth_services" />
   
   <Button
-    android:id="@+id/limitedAuthdButton"
+    android:id="@+id/limitedAuthButton"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:layout_alignLeft="@+id/fullAuthButton"
     android:layout_below="@+id/fullAuthButton"
     android:text="@string/button_auth_services_limited" />
 
+    <Button
+    android:id="@+id/friendsButton"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:layout_alignLeft="@+id/limitedAuthButton"
+    android:layout_below="@+id/limitedAuthButton"
+    android:text="@string/button_friends" />
+    
 </RelativeLayout>

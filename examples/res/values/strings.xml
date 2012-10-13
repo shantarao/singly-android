@@ -6,5 +6,6 @@
   <string name="title_activity_main">Singly Examples</string>
   <string name="button_auth_services">Full Authenticated Services</string>
   <string name="button_auth_services_limited">Limited Authenticated Services</string>
+  <string name="button_friends">Friends List</string>
 
 </resources>

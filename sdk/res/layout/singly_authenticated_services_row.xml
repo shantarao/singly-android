@@ -7,11 +7,11 @@
 
   <ImageView
     android:id="@+id/iconView1"
-    android:layout_width="50dp"
-    android:layout_height="wrap_content"
-    android:layout_gravity="left|center_vertical"  
-    android:layout_weight="0"  
-    android:layout_marginRight="8dp" />
+    android:layout_width="32dp"
+    android:layout_height="32dp"
+    android:layout_gravity="left|center_vertical"
+    android:layout_weight="0"
+    android:layout_margin="8dp" />
 
   <TextView
     android:id="@+id/textView1"
@@ -31,6 +31,7 @@
     android:layout_margin="8dp"
     android:layout_weight="0"
     android:focusable="false"
+    android:focusableInTouchMode="false"
     android:clickable="false" />
 
 </LinearLayout>

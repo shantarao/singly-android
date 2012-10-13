@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="fill_parent"
+  android:layout_height="wrap_content"
+  android:orientation="vertical"
+  android:minHeight="32dp">
+
+  <TextView
+    android:id="@+id/tableOfContentsSectionHeader"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:paddingTop="5dp"
+    android:paddingLeft="8dp"
+    android:paddingBottom="5dp"
+    android:text=""
+    android:visibility="visible"
+    android:background="#bbbbbb" />
+
+  <LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:minHeight="42dp">
+
+    <ProgressBar
+      android:id="@+id/friendProgress"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_gravity="left|center_vertical"
+      android:layout_weight="0"
+      style="?android:attr/progressBarStyleSmall"
+      android:paddingRight="8dp" 
+      android:visibility="gone" />
+
+    <ImageView
+      android:id="@+id/friendImage"
+      android:layout_width="32dp"
+      android:layout_height="32dp"
+      android:layout_gravity="left|center_vertical"
+      android:layout_weight="0"
+      android:layout_marginRight="8dp"
+      android:padding="5dp" 
+      android:visibility="gone" />
+
+    <TextView
+      android:id="@+id/friendName"
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_gravity="left|center_vertical"
+      android:layout_weight="5"
+      android:text=""
+      android:textStyle="bold" />
+
+  </LinearLayout>
+
+</LinearLayout>
