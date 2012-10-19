@@ -20,8 +20,19 @@ import org.codehaus.jackson.node.DoubleNode;
 import org.codehaus.jackson.node.NumericNode;
 import org.codehaus.jackson.node.TextNode;
 
-public class JSONUtils {
+/**
+ * Utility methods for parsing JSON strings and getting values.
+ */
+public class JSON {
 
+  /**
+   * Returns true if the string look like a valid JSON string, starting and
+   * ending with either squiggly or square brackets.
+   * 
+   * @param content The JSON string to check.
+   * 
+   * @return True if the string looks like a valid JSON string.
+   */
   public static boolean looksLikeJson(String content) {
 
     String trimmed = content.trim();
@@ -31,6 +42,13 @@ public class JSONUtils {
     return squiggs || square;
   }
 
+  /**
+   * Parses the JSON string into a tree of JsonNode objects.
+   * 
+   * @param json The JSON string to parse.
+   * 
+   * @return The root of a tree of JsonNode objects.
+   */
   public static JsonNode parse(String json) {
 
     ObjectMapper mapper = new ObjectMapper();
@@ -44,6 +62,14 @@ public class JSONUtils {
     }
   }
 
+  /**
+   * Parses the JSON string into a Map.  The Jackson JSON parser will parse
+   * value into common types.
+   * 
+   * @param json The JSON string to parse.
+   * 
+   * @return The root of a tree of objects.
+   */
   public static Map<String, Object> parseToMap(String json) {
 
     ObjectMapper mapper = new ObjectMapper();
