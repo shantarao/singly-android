@@ -42,6 +42,7 @@
       android:layout_weight="0"
       android:layout_marginRight="8dp"
       android:padding="5dp" 
+      android:contentDescription=""
       android:visibility="gone" />
 
     <TextView

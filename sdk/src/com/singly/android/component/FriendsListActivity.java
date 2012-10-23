@@ -23,10 +23,10 @@ import android.widget.TextView;
 
 import com.singly.android.client.AsyncApiResponseHandler;
 import com.singly.android.client.SinglyClient;
+import com.singly.android.client.SinglyClient.Authentication;
 import com.singly.android.sdk.R;
 import com.singly.android.util.JSON;
 import com.singly.android.util.RemoteImageCache;
-import com.singly.android.util.SinglyUtils;
 
 /**
  * An activity class that display a list of friends from all services the user
@@ -75,7 +75,7 @@ public class FriendsListActivity
   extends Activity {
 
   protected RemoteImageCache imageCache;
-  protected SinglyClient singlyClient = SinglyClient.getInstance();
+  protected SinglyClient singlyClient;
 
   protected LinearLayout tableOfContentsLayout;
   protected ListView friendsListView;
@@ -161,6 +161,9 @@ public class FriendsListActivity
 
     final Intent intent = getIntent();
 
+    // get the singly client
+    this.singlyClient = SinglyClient.getInstance();
+
     // get the block configuration for the adapter
     blocksToPreload = intent.getIntExtra("blocksToPreLoad", 1);
     blockSize = intent.getIntExtra("blockSize", 20);
@@ -185,7 +188,8 @@ public class FriendsListActivity
 
     // get the access token and query parameters
     Map<String, String> qparams = new HashMap<String, String>();
-    qparams.put("access_token", SinglyUtils.getAccessToken(this));
+    Authentication auth = singlyClient.getAuthentication(this);
+    qparams.put("access_token", auth.accessToken);
 
     // get total number of rows
     singlyClient.doGetApiRequest(this, "/friends", qparams,

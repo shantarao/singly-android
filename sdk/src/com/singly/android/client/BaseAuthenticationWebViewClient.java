@@ -1,8 +1,10 @@
 package com.singly.android.client;
 
+import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.JsonNode;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.webkit.WebViewClient;
 
 import com.loopj.android.http.AsyncHttpClient;
@@ -53,11 +55,30 @@ public abstract class BaseAuthenticationWebViewClient
       @Override
       public void onSuccess(String response) {
 
-        // get the access token and put it into the shared preferences
         if (response != null) {
+
+          // get the account and access token from JSON
           JsonNode root = JSON.parse(response);
           String accessToken = JSON.getString(root, "access_token");
-          SinglyUtils.saveAccessToken(context, accessToken);
+          String account = JSON.getString(root, "account");
+
+          // get the shard preferences
+          SharedPreferences prefs = context.getSharedPreferences("singly",
+            Context.MODE_PRIVATE);
+          SharedPreferences.Editor editor = prefs.edit();
+
+          // save the account if there is one
+          if (StringUtils.isNotBlank(account)) {
+            editor.putString(SinglyClient.ACCOUNT, account);
+          }
+
+          // save the access token if there is one
+          if (StringUtils.isNotBlank(accessToken)) {
+            editor.putString(SinglyClient.ACCESS_TOKEN, accessToken);
+          }
+
+          // commit changes to shared preferences
+          editor.commit();
         }
 
         // done with the authentication process, perform finish callback

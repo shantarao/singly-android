@@ -28,6 +28,17 @@ public class SinglyClient {
   private String clientSecret;
   private Class authenticationActivity = AuthenticationActivity.class;
 
+  public static final String ACCESS_TOKEN = "accessToken";
+  public static final String ACCOUNT = "account";
+
+  /**
+   * Class that holds a Singly authentication incuding account and access token.
+   */
+  public static class Authentication {
+    public String account;
+    public String accessToken;
+  }
+
   private SinglyClient() {
     this.clientId = "your_client_id";
     this.clientSecret = "your_client_secret";
@@ -86,8 +97,6 @@ public class SinglyClient {
     Map<String, String> authExtra) {
 
     Intent authIntent = new Intent(context, authenticationActivity);
-    authIntent.putExtra("clientId", clientId);
-    authIntent.putExtra("clientSecret", clientSecret);
     authIntent.putExtra("service", service);
 
     // convert any extra authentication parameters into a bundle
@@ -257,6 +266,44 @@ public class SinglyClient {
           responseHandler.onFailure(error);
         }
       });
+  }
+
+  /**
+   * Returns the Authentication for the current user.
+   * 
+   * @param context The current Android context.
+   * 
+   * @return The Authentication object containing the accound and the Singly
+   * access token.
+   */
+  public Authentication getAuthentication(Context context) {
+
+    SharedPreferences prefs = context.getSharedPreferences("singly",
+      Context.MODE_PRIVATE);
+
+    String account = prefs.getString(ACCOUNT, null);
+    String accessToken = prefs.getString(ACCESS_TOKEN, null);
+
+    Authentication auth = new Authentication();
+    auth.account = account;
+    auth.accessToken = accessToken;
+
+    return auth;
+  }
+
+  /**
+   * Removes the Authentication for the current user.
+   * 
+   * @param context The current Android context.
+   */
+  public static void clearAccount(Context context) {
+
+    SharedPreferences prefs = context.getSharedPreferences("singly",
+      Context.MODE_PRIVATE);
+    SharedPreferences.Editor editor = prefs.edit();
+    editor.remove(ACCESS_TOKEN);
+    editor.remove(ACCOUNT);
+    editor.commit();
   }
 
   public String getClientId() {
