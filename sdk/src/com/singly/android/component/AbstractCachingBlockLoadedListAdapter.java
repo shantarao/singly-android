@@ -1,5 +1,6 @@
 package com.singly.android.component;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -38,15 +39,19 @@ public abstract class AbstractCachingBlockLoadedListAdapter<T>
   extends BaseAdapter {
 
   // block handling
-  private LruCache<Integer, List<T>> blockCache;
   private int maxBlockId = 0;
-  private Set<Integer> blockLoads = new HashSet<Integer>();
   private int lastCheckpoint = 0;
   private int rows = 0;
   private int blocks = 0;
   private int blockSize = 20;
   private int blocksToPreload = 2;
   private int blocksToCache = 50;
+
+  private LruCache<Integer, List<T>> blockCache;
+  private Set<Integer> blocksLoading = Collections
+    .synchronizedSet(new HashSet<Integer>());
+  private Set<Integer> blocksLoaded = Collections
+    .synchronizedSet(new HashSet<Integer>());
 
   /**
    * Attempts to load a number of blocks into the cache.  This would be the 
@@ -107,8 +112,8 @@ public abstract class AbstractCachingBlockLoadedListAdapter<T>
         boolean loadBlock = false;
         synchronized (this) {
           if (blockCache.get(curBlockId) == null
-            && !blockLoads.contains(curBlockId)) {
-            blockLoads.add(curBlockId);
+            && !blocksLoading.contains(curBlockId)) {
+            blocksLoading.add(curBlockId);
             loadBlock = true;
           }
         }
@@ -147,11 +152,34 @@ public abstract class AbstractCachingBlockLoadedListAdapter<T>
     // guard adding to cache and removing from loading state
     synchronized (this) {
       blockCache.put(blockId, block);
-      blockLoads.remove(blockId);
+      blocksLoaded.add(blockId);
+      blocksLoading.remove(blockId);
     }
 
     // update any visible rows that might be waiting
     notifyDataSetChanged();
+  }
+
+  /**
+   * Returns the block id and block position for the current position.
+   * 
+   * The block id is the block that contains the row at position.  The block
+   * position is the position in the block that represents that row.
+   * 
+   * @param position The row position in the list.
+   * 
+   * @return An array containing two entries, block id and block position.
+   */
+  protected int[] getBlockIdAndPosition(int position) {
+
+    // get the block id and block position from the row position
+    int boundedPosition = Math.min(Math.max(position, 0), rows - 1);
+    int blockId = boundedPosition / blockSize;
+    int blockPos = boundedPosition % blockSize;
+
+    return new int[] {
+      blockId, blockPos
+    };
   }
 
   /**
@@ -191,28 +219,6 @@ public abstract class AbstractCachingBlockLoadedListAdapter<T>
   }
 
   /**
-   * Returns the block id and block position for the current position.
-   * 
-   * The block id is the block that contains the row at position.  The block
-   * position is the position in the block that represents that row.
-   * 
-   * @param position The row position in the list.
-   * 
-   * @return An array containing two entries, block id and block position.
-   */
-  public int[] getBlockIdAndPosition(int position) {
-
-    // get the block id and block position from the row position
-    int boundedPosition = Math.min(Math.max(position, 0), rows - 1);
-    int blockId = boundedPosition / blockSize;
-    int blockPos = boundedPosition % blockSize;
-
-    return new int[] {
-      blockId, blockPos
-    };
-  }
-
-  /**
    * Returns the backing object, aka row, for the position.  The backing object
    * is the object that was cached for a given position.  Blocks contains one
    * or more backing objects.
@@ -228,13 +234,18 @@ public abstract class AbstractCachingBlockLoadedListAdapter<T>
     int blockId = blockIdAndPos[0];
     int blockPos = blockIdAndPos[1];
 
-    // get and return the backing row object from the cache if it exists
-    T rowBacking = null;
-    List<T> block = blockCache.get(blockId);
-    if (block != null) {
-      rowBacking = block.get(blockPos);
+    // block is loaded
+    if (blocksLoaded.contains(blockId)) {
+
+      // row is good, return from the block
+      List<T> block = blockCache.get(blockId);
+      if (block != null && block.size() > 0 && block.size() > blockPos) {
+        return block.get(blockPos);
+      }
     }
-    return rowBacking;
+
+    // block still loading or not good
+    return null;
   }
 
   @Override

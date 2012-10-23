@@ -22,12 +22,12 @@ import android.widget.TextView;
 
 import com.singly.android.client.AsyncApiResponseHandler;
 import com.singly.android.client.SinglyClient;
+import com.singly.android.client.SinglyClient.Authentication;
 import com.singly.android.sdk.R;
 import com.singly.android.util.ImageCacheListener;
 import com.singly.android.util.ImageInfo;
 import com.singly.android.util.JSON;
 import com.singly.android.util.RemoteImageCache;
-import com.singly.android.util.SinglyUtils;
 
 /**
  * A {@link TableOfContentsListAdapter} implementation customized for use with
@@ -38,7 +38,8 @@ public class FriendsListAdapter
 
   private LayoutInflater inflater;
   private Context context;
-  private SinglyClient singlyClient = SinglyClient.getInstance();
+  private SinglyClient singlyClient;
+  private String accessToken;
   private RemoteImageCache imageCache;
   private Bitmap defaultImage;
 
@@ -54,7 +55,7 @@ public class FriendsListAdapter
 
     // get the access token and query parameters
     Map<String, String> qparams = new HashMap<String, String>();
-    qparams.put("access_token", SinglyUtils.getAccessToken(context));
+    qparams.put("access_token", accessToken);
     qparams.put("offset", String.valueOf(offset));
     qparams.put("limit", String.valueOf(limit));
     qparams.put("toc", "true");
@@ -162,6 +163,10 @@ public class FriendsListAdapter
         R.drawable.friend_noimage);
     }
 
+    // get the singly client and access token
+    this.singlyClient = SinglyClient.getInstance();
+    Authentication auth = singlyClient.getAuthentication(context);
+    this.accessToken = auth.accessToken;
   }
 
   @Override
@@ -204,7 +209,10 @@ public class FriendsListAdapter
     // display the row or loading if the row isn't available yet
     viewHolder.name.setText("");
     viewHolder.image.setImageBitmap(null);
-    final Friend friend = getBackingObject(position);
+    Friend friend;
+
+    // get the row object
+    friend = getBackingObject(position);
     if (friend != null) {
 
       String friendName = friend.name;
@@ -230,7 +238,8 @@ public class FriendsListAdapter
         imageInfo.quality = 80;
         imageInfo.sample = true;
 
-        // setup a listener to just change the one image view instead of calling
+        // setup a listener to just change the one image view instead of
+        // calling
         // notifyDataSetChanged which redraws the entire list view screen
         final ListView mainListView = (ListView)parent;
         final int curPosition = position;

@@ -5,7 +5,6 @@ import java.util.Map;
 
 import android.Manifest;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -111,51 +110,5 @@ public class SinglyUtils {
 
     // not connected to the network
     return false;
-  }
-
-  /**
-   * Saves the Singly access token to shared preferences.
-   * 
-   * @param context The current Android context.
-   * @param accessToken The Singly access token.
-   */
-  public static void saveAccessToken(Context context, String accessToken) {
-    if (accessToken != null && accessToken.trim().length() > 0) {
-      SharedPreferences prefs = context.getSharedPreferences("singly",
-        Context.MODE_PRIVATE);
-      SharedPreferences.Editor editor = prefs.edit();
-      editor.putString("accessToken", accessToken);
-      editor.commit();
-    }
-  }
-
-  /**
-   * Gets the access token from Shared preferences if one exists.
-   * 
-   * @param context The current Android context.
-   * 
-   * @return The access token or null if one does not exist.
-   */
-  public static String getAccessToken(Context context) {
-    SharedPreferences prefs = context.getSharedPreferences("singly",
-      Context.MODE_PRIVATE);
-    return prefs.getString("accessToken", null);
-  }
-
-  /**
-   * Removes the access token from shared preferences.
-   * 
-   * This is useful in cases where we have an access token but for some reason
-   * it isn't valid.
-   * 
-   * @param context The current Android context.
-   */
-  public static void clearAccessToken(Context context) {
-
-    SharedPreferences prefs = context.getSharedPreferences("singly",
-      Context.MODE_PRIVATE);
-    SharedPreferences.Editor editor = prefs.edit();
-    editor.remove("accessToken");
-    editor.commit();
   }
 }

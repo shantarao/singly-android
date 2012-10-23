@@ -3,6 +3,8 @@ package com.singly.android.client;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
+
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -20,18 +22,17 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.singly.android.client.SinglyClient.Authentication;
 import com.singly.android.util.SinglyUtils;
 
 /**
  * Activity that handles Singly authentication to various services by opening
  * WebViews and performing oauth.
  * 
- * Four values must be passed into the activity by the Intent that started it.
+ * Two values can be passed into this Activity by the Intent that started it.
  * 
  * <ol>
- *   <li>clientId - Holding the Singly app client id.</li>
- *   <li>clientSecret - Holding the Singly app client secret.</li>
- *   <li>service - The name of the service to authenticate the user
+ *   <li>service - Required, the name of the service to authenticate the user
  *   against (i.e. facebook)</li>
  *   <li>authExtra - An optional map of extra authentication parameters in a
  *   Bundle.  This include parameters such as scope and flag.</li>
@@ -42,14 +43,18 @@ import com.singly.android.util.SinglyUtils;
  * service for the user to authenticate.  Two, once the user authenticates the
  * WebView is redirected to the success URL with the authentication code as a 
  * query parameter.  Three, the authentication code is parsed from the 
- * success URL and a call is made to retrieve the access token.  The access 
- * token is then stored in the shared preferences of the app and it can be 
- * retrieved to make calls to the Singly API.
+ * success URL and a call is made to retrieve the access token.  The singly 
+ * account id and access token are then stored in the shared preferences of the 
+ * app where it can be retrieved to make calls to the Singly API.
  * 
- * A progress dialog is shown as the authentication webpage is loading.
+ * Per the Singly authorization flow, if the account is already stored, meaning
+ * the user has already authenticated this app, then the account is passed into
+ * the /authorize call to authenticate the new service against the existing 
+ * account.  If an account does not exist, account=false is passed into the
+ * /authorize call.
  * 
  * Once the access token is saved upon successful authentication or in the case 
- * of the URL erroring, the AuthenticationActivity is finished.
+ * of the URL erroring, the AuthenticationActivity finishes itself.
  * 
  * Expert: The AuthenticationActivity handles all authentication steps. If you 
  * need a more fine grained control of the authentication process, the 
@@ -58,10 +63,8 @@ import com.singly.android.util.SinglyUtils;
  * {@link #getWebViewClient()} and {@link #getWebChromeClient()} respectively.
  * 
  * The {@link BaseAuthenticationWebViewClient} can be extended to create your
- * own WebViewClient implementation. 
- * 
- * @see {@link SinglyUtils#saveAccessToken(Context, String)}
- * @see {@link SinglyUtils#getAccessToken(Context)}
+ * own WebViewClient implementation.  Any WebViewClient will be expected to 
+ * persist the account and access token to shared preferences.
  */
 public class AuthenticationActivity
   extends Activity {
@@ -73,6 +76,7 @@ public class AuthenticationActivity
   private ProgressDialog progressDialog;
 
   // Singly authentication variables
+  private SinglyClient singlyClient;
   private String clientId;
   private String clientSecret;
   private String service;
@@ -156,10 +160,22 @@ public class AuthenticationActivity
     }
   }
 
+  /**
+   * Returns the WebViewClient implementation used by this Activity.  By default
+   * this is the {@link AuthenticationWebViewClient} class.
+   * 
+   * @return The WebViewClient used for authentication.
+   */
   protected WebViewClient getWebViewClient() {
     return new AuthenticationWebViewClient();
   }
 
+  /**
+   * Returns the WebChromeClient implementation used by this Activity. By
+   * default this is the {@link AuthenticationWebChromeClient} class.
+   * 
+   * @return The WebViewClient used for authentication.
+   */
   protected WebChromeClient getWebChromeClient() {
     return new AuthenticationWebChromeClient();
   }
@@ -171,15 +187,19 @@ public class AuthenticationActivity
 
     this.context = (Context)this;
     Intent intent = getIntent();
-    this.clientId = intent.getStringExtra("clientId");
-    this.clientSecret = intent.getStringExtra("clientSecret");
     this.service = intent.getStringExtra("service");
     this.authExtra = intent.getBundleExtra("authExtra");
 
+    // get an instance of the singly client
+    singlyClient = SinglyClient.getInstance();
+    this.clientId = singlyClient.getClientId();
+    this.clientSecret = singlyClient.getClientSecret();
+
     // if the client id, client secret, or service are not passed then the
     // activity immediately exits
-    if (this.clientId == null || this.clientSecret == null
-      || this.service == null) {
+    if (StringUtils.isBlank(this.clientId)
+      || StringUtils.isBlank(this.clientSecret)
+      || StringUtils.isBlank(this.service)) {
       this.finish();
     }
 
@@ -197,6 +217,11 @@ public class AuthenticationActivity
         qparams.put("flag", authExtra.getString("flag"));
       }
     }
+
+    // auth flow says account=false if we don't have an singly account stored
+    Authentication auth = singlyClient.getAuthentication(context);
+    String account = auth.account;
+    qparams.put("account", StringUtils.isNotBlank(account) ? account : "false");
 
     // create the authentication url
     String authUrl = SinglyUtils.createSinglyURL("/oauth/authorize", qparams);

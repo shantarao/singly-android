@@ -30,12 +30,12 @@ import android.widget.ListView;
 
 import com.singly.android.client.AsyncApiResponseHandler;
 import com.singly.android.client.SinglyClient;
+import com.singly.android.client.SinglyClient.Authentication;
 import com.singly.android.sdk.R;
 import com.singly.android.util.ImageCacheListener;
 import com.singly.android.util.ImageInfo;
 import com.singly.android.util.JSON;
 import com.singly.android.util.RemoteImageCache;
-import com.singly.android.util.SinglyUtils;
 
 /**
  * An Activity that shows which Singly service a user is authenticated against
@@ -99,7 +99,10 @@ public class AuthenticatedServicesActivity
       // get the service and service name for the clicked row
       SinglyService service = services.get(pos);
       CheckBox checkBox = (CheckBox)item.findViewById(R.id.checkBox1);
-      final boolean authenticated = checkBox.isChecked();
+
+      // we want to authenticate if the box currently isn't checked otherwise
+      // we want to de-authenticate
+      final boolean authenticate = !checkBox.isChecked();
       final String serviceId = service.id;
       final String serviceName = service.name;
 
@@ -107,14 +110,14 @@ public class AuthenticatedServicesActivity
       AlertDialog.Builder okCancelDialog = new AlertDialog.Builder(
         AuthenticatedServicesActivity.this);
 
-      // if authenticated pop dialog to de-authenticate, else to authenticate
-      if (authenticated) {
-        okCancelDialog.setTitle("Remove " + serviceName);
-        okCancelDialog.setMessage("Remove authentication for " + serviceName);
-      }
-      else {
+      // if authenticating pop dialog to authenticate, else to de-authenticate
+      if (authenticate) {
         okCancelDialog.setTitle("Add " + serviceName);
         okCancelDialog.setMessage("Authenticate with " + serviceName);
+      }
+      else {
+        okCancelDialog.setTitle("Remove " + serviceName);
+        okCancelDialog.setMessage("Remove authentication for " + serviceName);
       }
 
       // they clicked the ok button
@@ -122,19 +125,31 @@ public class AuthenticatedServicesActivity
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dint, int which) {
 
-            // if currently authenticated then we are de-authenticating, do
-            // a POST request to delete the profile from the user's Singly
-            // account
-            if (authenticated) {
+            if (authenticate) {
+
+              // get oauth scope and flag
+              Map<String, String> authExtra = new LinkedHashMap<String, String>();
+              if (oauthScopes != null) {
+                authExtra.put("scope", oauthScopes.getString(serviceId));
+              }
+              if (oauthFlags != null) {
+                authExtra.put("flag", oauthFlags.getString(serviceId));
+              }
+
+              // not authenticated, follow the normal authentication process
+              // via an AuthenticationActivity
+              singlyClient.authenticate(context, serviceId, authExtra);
+            }
+            else {
 
               Map<String, String> qparams = new HashMap<String, String>();
               String serviceUserId = serviceIds.get(serviceId);
               qparams.put("delete", serviceUserId + "@" + serviceId);
 
-              // add the access token
-              String accessToken = SinglyUtils.getAccessToken(context);
-              if (accessToken != null) {
-                qparams.put("access_token", accessToken);
+              // add the client access token
+              Authentication auth = singlyClient.getAuthentication(context);
+              if (StringUtils.isNotBlank(auth.accessToken)) {
+                qparams.put("access_token", auth.accessToken);
               }
 
               // this calls a profile delete, success means the user is no
@@ -161,21 +176,6 @@ public class AuthenticatedServicesActivity
                   }
                 });
             }
-            else {
-
-              // get oauth scope and flag
-              Map<String, String> authExtra = new LinkedHashMap<String, String>();
-              if (oauthScopes != null) {
-                authExtra.put("scope", oauthScopes.getString(serviceId));
-              }
-              if (oauthFlags != null) {
-                authExtra.put("flag", oauthFlags.getString(serviceId));
-              }
-
-              // not authenticated, follow the normal authentication process
-              // via an AuthenticationActivity
-              singlyClient.authenticate(context, serviceId, authExtra);
-            }
           }
         });
 
@@ -200,9 +200,12 @@ public class AuthenticatedServicesActivity
 
     // get the access token and pass it in as a query parameter
     Map<String, String> qparams = new LinkedHashMap<String, String>();
-    String accessToken = SinglyUtils.getAccessToken(context);
-    if (accessToken != null) {
-      qparams.put("access_token", accessToken);
+    qparams.put("verify", "true");
+
+    // get the access token
+    Authentication auth = singlyClient.getAuthentication(context);
+    if (StringUtils.isNotBlank(auth.accessToken)) {
+      qparams.put("access_token", auth.accessToken);
     }
 
     // get all the services the user is authenticated against
@@ -215,13 +218,30 @@ public class AuthenticatedServicesActivity
           // get the set of services from the response and populate the service
           // to user id mapping
           JsonNode root = JSON.parse(response);
-          List<String> profileNames = JSON.getFieldnames(root);
-          for (String profileName : profileNames) {
+          Map<String, JsonNode> profileNodes = JSON.getFields(root);
+          for (Map.Entry<String, JsonNode> entry : profileNodes.entrySet()) {
+            
+            String profileName = entry.getKey();
+            JsonNode profileArrayNode = entry.getValue();
+            
+            // ignore the id fiel which is the singly account id
             if (!profileName.equals("id")) {
-              authServices.add(profileName);
-              List<String> profileIds = JSON.getStrings(root, profileName);
-              if (profileIds != null && !profileIds.isEmpty()) {
-                serviceIds.put(profileName, profileIds.get(0));
+              
+              // the JSON is an array with a singly node containing the profile
+              if (profileArrayNode.isArray()) {
+                
+                // check if the auth token for the profile is no longer valid
+                // if not valid ignore the service
+                JsonNode profileNode = profileArrayNode.get(0);
+                JsonNode errorNode = JSON.getJsonNode(profileNode, "error");
+                if (errorNode != null) {
+                  continue;
+                }
+                
+                // add the profile name and id
+                String profileId = JSON.getString(profileNode, "id");
+                serviceIds.put(profileName, profileId);
+                authServices.add(profileName);
               }
             }
           }
