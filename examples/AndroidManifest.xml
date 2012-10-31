@@ -19,7 +19,8 @@
     android:theme="@style/AppTheme">
 
     <!-- Singly SDK authentication activity -->
-    <activity android:name="com.singly.android.client.AuthenticationActivity" />
+    <activity android:name="com.singly.android.client.AuthenticationActivity" />    
+    <activity android:name="com.singly.android.client.FacebookAuthenticationActivity" />
 
     <!-- Singly component shows authenticated services -->
     <activity android:name="com.singly.android.component.AuthenticatedServicesActivity" />

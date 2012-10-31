@@ -42,7 +42,7 @@ public class MainActivity
       @Override
       public void onClick(View v) {
 
-        // shows how to pass in scope
+        // example of how to pass in scope
         Bundle scopes = new Bundle();
         scopes.putCharSequence("linkedin",
           "r_basicprofile r_fullprofile r_emailaddress");

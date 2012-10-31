@@ -62,7 +62,7 @@ public abstract class BaseAuthenticationWebViewClient
           String accessToken = JSON.getString(root, "access_token");
           String account = JSON.getString(root, "account");
 
-          // get the shard preferences
+          // get the shared preferences
           SharedPreferences prefs = context.getSharedPreferences("singly",
             Context.MODE_PRIVATE);
           SharedPreferences.Editor editor = prefs.edit();

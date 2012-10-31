@@ -20,7 +20,6 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-import android.widget.Toast;
 
 import com.singly.android.client.SinglyClient.Authentication;
 import com.singly.android.util.SinglyUtils;
@@ -29,12 +28,15 @@ import com.singly.android.util.SinglyUtils;
  * Activity that handles Singly authentication to various services by opening
  * WebViews and performing oauth.
  * 
+ * The AuthenticationActivity must be registered in the manifest of the 
+ * application using the Singly SDK.
+ * 
  * Two values can be passed into this Activity by the Intent that started it.
  * 
  * <ol>
  *   <li>service - Required, the name of the service to authenticate the user
  *   against (i.e. facebook)</li>
- *   <li>authExtra - An optional map of extra authentication parameters in a
+ *   <li>params - An optional map of extra authentication parameters in a
  *   Bundle.  This include parameters such as scope and flag.</li>
  * </ol>    
  * 
@@ -70,6 +72,10 @@ public class AuthenticationActivity
   extends Activity {
 
   protected static final String SUCCESS_REDIRECT = "singly://success";
+  
+  // android OK result code is -1, so we use -50 and less
+  public static final int RESULT_URL_ERROR = -50;
+  public static final int RESULT_SINGLY_ERROR = -51;
 
   // components and layouts
   private WebView webView;
@@ -80,7 +86,7 @@ public class AuthenticationActivity
   private String clientId;
   private String clientSecret;
   private String service;
-  private Bundle authExtra;
+  private Bundle params;
   private Context context;
 
   private class AuthenticationWebViewClient
@@ -108,11 +114,8 @@ public class AuthenticationActivity
             @Override
             public void onError(Throwable error) {
 
-              // show toast for error saving the authentication tokens
-              Toast.makeText(AuthenticationActivity.this,
-                "Error completing authentication", Toast.LENGTH_LONG).show();
-
               // page errored close this activity
+              AuthenticationActivity.this.setResult(RESULT_SINGLY_ERROR);
               AuthenticationActivity.this.finish();
             }
           });
@@ -135,11 +138,8 @@ public class AuthenticationActivity
       // dismiss any progress dialog
       progressDialog.dismiss();
 
-      // show toast for error
-      Toast.makeText(AuthenticationActivity.this,
-        "Error opening authentication webpage", Toast.LENGTH_LONG).show();
-
       // page errored close this activity
+      AuthenticationActivity.this.setResult(RESULT_URL_ERROR);
       AuthenticationActivity.this.finish();
     }
 
@@ -188,7 +188,7 @@ public class AuthenticationActivity
     this.context = (Context)this;
     Intent intent = getIntent();
     this.service = intent.getStringExtra("service");
-    this.authExtra = intent.getBundleExtra("authExtra");
+    this.params = intent.getBundleExtra("params");
 
     // get an instance of the singly client
     singlyClient = SinglyClient.getInstance();
@@ -209,12 +209,12 @@ public class AuthenticationActivity
     qparams.put("service", service);
 
     // add in scope and flag parameters if present
-    if (authExtra != null) {
-      if (authExtra.containsKey("scope")) {
-        qparams.put("scope", authExtra.getString("scope"));
+    if (params != null) {
+      if (params.containsKey("scope")) {
+        qparams.put("scope", params.getString("scope"));
       }
-      if (authExtra.containsKey("flag")) {
-        qparams.put("flag", authExtra.getString("flag"));
+      if (params.containsKey("flag")) {
+        qparams.put("flag", params.getString("flag"));
       }
     }
 

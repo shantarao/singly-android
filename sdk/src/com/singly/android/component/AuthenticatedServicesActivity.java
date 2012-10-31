@@ -62,6 +62,8 @@ import com.singly.android.util.RemoteImageCache;
  *   <li>includes - An array of the service names to include.  Only those
  *   services specified will be displayed.  If not set all services Singly 
  *   provides authentication for are displayed.</li>
+ *   <li>useNative - True|False should we use native authentication if and when
+ *   it is available.</li>
  * </ol>   
  */
 public class AuthenticatedServicesActivity
@@ -87,10 +89,13 @@ public class AuthenticatedServicesActivity
 
     private Bundle oauthScopes;
     private Bundle oauthFlags;
+    private boolean useNativeAuth;
 
-    public ItemClickListener(Bundle oauthScopes, Bundle oauthFlags) {
+    public ItemClickListener(Bundle oauthScopes, Bundle oauthFlags,
+      boolean useNativeAuth) {
       this.oauthScopes = oauthScopes;
       this.oauthFlags = oauthFlags;
+      this.useNativeAuth = useNativeAuth;
     }
 
     @Override
@@ -130,15 +135,22 @@ public class AuthenticatedServicesActivity
               // get oauth scope and flag
               Map<String, String> authExtra = new LinkedHashMap<String, String>();
               if (oauthScopes != null) {
-                authExtra.put("scope", oauthScopes.getString(serviceId));
+                String serviceScopes = oauthScopes.getString(serviceId);
+                if (StringUtils.isNotBlank(serviceScopes)) {
+                  authExtra.put("scope", serviceScopes);
+                }
               }
               if (oauthFlags != null) {
-                authExtra.put("flag", oauthFlags.getString(serviceId));
+                String serviceFlags = oauthFlags.getString(serviceId);
+                if (StringUtils.isNotBlank(serviceFlags)) {
+                  authExtra.put("flag", serviceFlags);
+                }
               }
 
               // not authenticated, follow the normal authentication process
               // via an AuthenticationActivity
-              singlyClient.authenticate(context, serviceId, authExtra);
+              singlyClient.authenticate(context, serviceId, authExtra,
+                useNativeAuth);
             }
             else {
 
@@ -220,16 +232,16 @@ public class AuthenticatedServicesActivity
           JsonNode root = JSON.parse(response);
           Map<String, JsonNode> profileNodes = JSON.getFields(root);
           for (Map.Entry<String, JsonNode> entry : profileNodes.entrySet()) {
-            
+
             String profileName = entry.getKey();
             JsonNode profileArrayNode = entry.getValue();
-            
+
             // ignore the id fiel which is the singly account id
             if (!profileName.equals("id")) {
-              
+
               // the JSON is an array with a singly node containing the profile
               if (profileArrayNode.isArray()) {
-                
+
                 // check if the auth token for the profile is no longer valid
                 // if not valid ignore the service
                 JsonNode profileNode = profileArrayNode.get(0);
@@ -237,7 +249,7 @@ public class AuthenticatedServicesActivity
                 if (errorNode != null) {
                   continue;
                 }
-                
+
                 // add the profile name and id
                 String profileId = JSON.getString(profileNode, "id");
                 serviceIds.put(profileName, profileId);
@@ -269,8 +281,9 @@ public class AuthenticatedServicesActivity
     Intent intent = getIntent();
 
     // scopes and flags parameters for each service
-    final Bundle oauthScopes = intent.getBundleExtra("scopes");
-    final Bundle oauthFlags = intent.getBundleExtra("flags");
+    Bundle oauthScopes = intent.getBundleExtra("scopes");
+    Bundle oauthFlags = intent.getBundleExtra("flags");
+    boolean useNativeAuth = intent.getBooleanExtra("useNativeAuth", true);
 
     // setup a service inclusion list if needed
     String[] includesAr = intent.getStringArrayExtra("includes");
@@ -285,7 +298,8 @@ public class AuthenticatedServicesActivity
     // us which row was clicked, on the layout xml the checkbox is not focusable
     // or clickable directly, the row handles that
     mainListView = (ListView)findViewById(R.id.authenticatedServicesList);
-    this.itemClickListener = new ItemClickListener(oauthScopes, oauthFlags);
+    this.itemClickListener = new ItemClickListener(oauthScopes, oauthFlags,
+      useNativeAuth);
     mainListView.setOnItemClickListener(itemClickListener);
 
     // set the services array adapter into the main list view

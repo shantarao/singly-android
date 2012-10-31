@@ -3,11 +3,14 @@ package com.singly.android.client;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.entity.ByteArrayEntity;
 
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 
 import com.loopj.android.http.AsyncHttpClient;
@@ -32,7 +35,7 @@ public class SinglyClient {
   public static final String ACCOUNT = "account";
 
   /**
-   * Class that holds a Singly authentication incuding account and access token.
+   * Class that holds Singly authentication including account and access token.
    */
   public static class Authentication {
     public String account;
@@ -90,24 +93,61 @@ public class SinglyClient {
    * 
    * @param context The context from which authenticate is called.
    * @param service The service to authenticate the user against.
-   * @param authExtra Any optional extra parameters used in oauth of services.
+   * @param params Any optional extra parameters used in oauth of services.
    * This includes scope and flag parameters.
+   * @param useNativeAuth Use native authentication where available.  For
+   * example when the user has the Android Facebook app installed.
    */
   public void authenticate(Context context, String service,
-    Map<String, String> authExtra) {
-
-    Intent authIntent = new Intent(context, authenticationActivity);
-    authIntent.putExtra("service", service);
+    Map<String, String> params, boolean useNativeAuth) {
 
     // convert any extra authentication parameters into a bundle
-    if (authExtra != null && !authExtra.isEmpty()) {
-      Bundle bundle = new Bundle();
-      for (Map.Entry<String, String> entry : authExtra.entrySet()) {
-        bundle.putString(entry.getKey(), entry.getValue());
+    Bundle paramsBundle = null;
+    if (params != null && !params.isEmpty()) {
+      paramsBundle = new Bundle();
+      for (Map.Entry<String, String> entry : params.entrySet()) {
+        paramsBundle.putString(entry.getKey(), entry.getValue());
       }
-      authIntent.putExtra("authExtra", bundle);
     }
 
+    // should we use native authenticaion where available
+    if (useNativeAuth) {
+      
+      // open facebook authentication if the service is authenticating against
+      // is facebook and the facebook app is installed
+      if (StringUtils.equals(service, "facebook")) {
+        try {
+
+          // no error ensures app is installed
+          String facebookApp = "com.facebook.katana";
+          context.getPackageManager().getApplicationInfo(facebookApp, 0);
+
+          // launch the activity for native authentication
+          Intent facebookIntent = new Intent(context,
+            FacebookAuthenticationActivity.class);
+          if (paramsBundle != null) {
+            facebookIntent.putExtra("params", paramsBundle);
+          }
+          context.startActivity(facebookIntent);
+
+          // don't fall through
+          return;
+        }
+        catch (PackageManager.NameNotFoundException e) {
+          // do nothing, fall back to web
+        }
+        catch (ActivityNotFoundException anfe) {
+          // app hasn't registered the facebook auth activity, fall back to web
+        }
+      }
+    }
+
+    // by default everything else goes through web authentication
+    Intent authIntent = new Intent(context, authenticationActivity);
+    authIntent.putExtra("service", service);
+    if (paramsBundle != null) {
+      authIntent.putExtra("params", paramsBundle);
+    }
     context.startActivity(authIntent);
   }
 
@@ -145,6 +185,8 @@ public class SinglyClient {
     }
     String getApiCallUrl = SinglyUtils.createSinglyURL(apiEndpoint);
     RequestParams rparms = params.isEmpty() ? null : new RequestParams(params);
+
+    System.out.println(getApiCallUrl);
 
     // do an async get request
     client.get(getApiCallUrl, rparms, new AsyncHttpResponseHandler() {
