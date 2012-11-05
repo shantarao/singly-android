@@ -22,7 +22,7 @@
     android:layout_weight="0"
     android:layout_gravity="right|center_vertical"
     android:gravity="center_horizontal"
-    android:background="#bbbbbb"
+    android:background="#44bbbbbb"
     android:orientation="vertical" 
     android:layout_marginLeft="5dp"/>
 
