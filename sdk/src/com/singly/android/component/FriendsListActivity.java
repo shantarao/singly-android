@@ -135,6 +135,13 @@ public class FriendsListActivity
         @Override
         public boolean onTouch(View v, MotionEvent event) {
 
+          if (event.getAction() == MotionEvent.ACTION_DOWN) {
+            tableOfContentsLayout.setBackgroundColor(0xffbbbbbb);
+          }
+          else if (event.getAction() == MotionEvent.ACTION_UP) {
+            tableOfContentsLayout.setBackgroundColor(0x88bbbbbb);
+          }
+
           // get the index in the toc that was touched
           int tocIndex = (int)(event.getY() / pixelsPerItem);
           tocIndex = Math.min(Math.max(tocIndex, 0), tocLength - 1);

@@ -232,8 +232,8 @@ public class FriendsListAdapter
         id = StringUtils.lowerCase(id);
         imageInfo.id = id;
         imageInfo.imageUrl = friend.imageUrl;
-        imageInfo.width = 32;
-        imageInfo.height = 32;
+        imageInfo.width = 42;
+        imageInfo.height = 42;
         imageInfo.format = Bitmap.CompressFormat.JPEG;
         imageInfo.quality = 80;
         imageInfo.sample = true;
