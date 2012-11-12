@@ -16,24 +16,64 @@ The library code is contained in the SinglyAndroidSDK project in the sdk folder.
 Sample implementations are contained in the SinglyAndroidExamples project in the examples folder.  Once you add your Singly client id and client secret as described below you can build and deploy the example application to see usage of the SDK.
 
 ## Dependencies
+The Singly Android SDK is built against latest version of Android, at this time 4.1, with the project build target being Android 2.3.3.  You will need to ensure you have Android 2.3.3 in your Android SDK or change the Singly SDK to use a later build target.
+
 The Singly Android SDK supports native Facebook authentication if the user has the Facebook Android app installed.  To support this functionality the Facebook Android SDK must be downloaded and linked as an Android Library project.  The Singly Android SDK already references the Facebook Android SDK as a Library project.  All tha needs to be done is to download the Facebook Android SDK from github at the following location and place it in the same parent directory as the Singly Android SDK:
 
   https://github.com/facebook/facebook-android-sdk/
 
-## 5 Minute Getting Started
+## Getting Started
 
+Here is the fastest way to get started by running the example app.
 
+1. Download the Singly Android SDK from github.
+2. Download the Facebook Android SDK from github in the same parent directory as the Singly SDK.
+3. In eclipse:
+    * Go to the File menu.  
+    * Select Import.  
+    * In the dialog select Android → Existing code into workspace → Next.  **This is different than General → Existing Projects into Workspace and the Facebook SDK is specific**.  
+    * Browse for the facebook-android-sdk/facebook folder.  
+    * Click ok.  
+    * This should import a project into your workspace called facebook.
+4. On the command line:
+    * Go to the facebook-android-sdk/facebook folder.  
+    * Run `android update project -p .` from the command line.  This will set the correct android sdk home directory for the Facebook project.    
+5. In eclipse:
+    * Go to the File menu.  
+    * Select Import.  
+    * In the dialog select General folder → Existing projects into workspace → Next.  
+    * Select root directory → Browse.  
+    * Navigate to the singly-android root folder click Ok.  
+    * This should import both the SinglyAndroidSDK and the SinglyAndroidExample projects into eclipse.
+6. In eclipse:
+    * Go to the navigator view.  
+    * Right click on the facebook project → Properties.  
+    * Select Java Compiler.  
+    * Check "Enable project specific settings".  
+    * Ensure compliance settings are 1.6 or higher.
+7. In eclipse:
+    * Go to the Project menu.  
+    * Select Clean → Clean all projects.  Everything should build now.
+8. Go to https://singly.com and register or login.
+9. Get your Singly client id and client secret for your app.
+10. Set your Singly client id and client secret in the `com.singly.android.client.SinglyClient` private constructor in the source code of the Singly Android SDK library.  The hardcoding of the client id and client secret are for security purposes.
+11. In Eclipse:
+    * Go to the navigator view.
+    * Right click the SinglyAndroidExamples project and select Run As → Android Application.  
+    * This should launch the examples app in the Android virtual device manager.  If you haven't setup an AVD you would need to set one up or connect an Android device.
 
 ## Using the Singly SDK
 
 The flow of using the Singly Android SDK is as follows
 
-1. Go to https://singly.com and register or login.
-2. Create your app or use the default Singly app.
+1. Download the Singly and Facebook Android SDKs.
+2. Configure the Facebook SDK as described above.  This should be a one time thing.
+3. Go to https://singly.com and register or login.
+2. Create your Singly app or use the default Singly app.
 3. Get the Singly client id and client secret for your app.
-4. Set your Singly client id and client secret in the `com.singly.android.client.SinglyClient` private constructor in the source code of the Singly Android SDK library.  The hardcoding of the client id and client secret are for security purposes.
+4. Set your Singly client id and client secret in the SinglyClient class
 5. Link the Singly Android SDK as a Library project into your application.
-6. Register the `com.singly.android.client.AuthenticationActivity` and `com.singly.android.client.FacebookAuthenticationActivity` activities in the AndroidManifest.xml file for your application.
+6. Register permissions and activites from the Singly SDK into your app's AndroidManifest.xml file.
 7. Get an instance of the SinglyClient using the `com.singly.android.client.SinglyClient.getInstance()` method.
 8. Authenticate a user against one or more services that singly supports.  This gives you a Singly access token.  The one Singly access token allow you to call methods for any service the user is authenticated against.  The Singly access token is stored in SharedPreferences along with a unique account id.
 9. Call Singly API methods to retrieve social data.  Parse the JSON responses and use the data in your application.

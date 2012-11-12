@@ -31,6 +31,11 @@ public class MainActivity
 
         Intent authServicesActivity = new Intent(context,
           AuthenticatedServicesActivity.class);
+        
+        // by default the example doesn't use native auth because it requires
+        // registering a facebook app and signing with a debug key. To get 
+        // started it is easier to do without this.
+        authServicesActivity.putExtra("useNativeAuth", false);        
         context.startActivity(authServicesActivity);
       }
     });
@@ -54,6 +59,7 @@ public class MainActivity
         };
         authServicesActivity.putExtra("includes", includedServices);
         authServicesActivity.putExtra("scopes", scopes);
+        authServicesActivity.putExtra("useNativeAuth", false); 
         context.startActivity(authServicesActivity);
       }
     });
