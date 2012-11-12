@@ -20,7 +20,11 @@ The Singly Android SDK supports native Facebook authentication if the user has t
 
   https://github.com/facebook/facebook-android-sdk/
 
-## Getting Started
+## 5 Minute Getting Started
+
+
+
+## Using the Singly SDK
 
 The flow of using the Singly Android SDK is as follows
 
@@ -50,9 +54,9 @@ To use the SDK you will need to register the SinglyAndroidSDK project as a Libra
 ### Setting up the AndroidManifest.xml file
 You will then need to register a few activites and permissions in the `AndroidManifest.xml` file for your app.  First register permissions.  The Singly Android SDK will need to access the internet, network state, and write to internal storage.
 
-  <uses-permission android:name="android.permission.INTERNET" />
-  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-  <uses-permission android:name="android.permission.WRITE_INTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WRITE_INTERNAL_STORAGE" />
 
 Next register the activities used when calling authenticate on the SinglyClient.  These are required.
 
