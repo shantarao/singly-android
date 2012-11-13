@@ -283,7 +283,7 @@ public class AuthenticatedServicesActivity
     // scopes and flags parameters for each service
     Bundle oauthScopes = intent.getBundleExtra("scopes");
     Bundle oauthFlags = intent.getBundleExtra("flags");
-    boolean useNativeAuth = intent.getBooleanExtra("useNativeAuth", true);
+    boolean useNativeAuth = intent.getBooleanExtra("useNativeAuth", false);
 
     // setup a service inclusion list if needed
     String[] includesAr = intent.getStringArrayExtra("includes");
