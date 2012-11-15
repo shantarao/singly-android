@@ -141,10 +141,10 @@ For more information on available Singly api calls check out our [API Overview](
 
 One of our goals with the Singly Android SDK is to create best of breed drop-in social data components.  The `com.singly.android.component` and `com.singly.android.util` packages contains different drop-in components and utility classes you may want to use:
 
-    * `com.singly.android.component.AuthenticatedServicesActivity` - An Activity that presents a list of services that the user can authenticate against.  Interaction with the SinglyClient class for authentication is handled.
-    * `com.singly.android.component.FriendsListActivity` - An Activity that provides a list of friends/contacts from all networks using the Singly /friends API.  Actions can be taken when the row of a friend is clicked.
-    * `com.singly.android.util.RemoteImageCache` - A utility class for downloading and caching remote images locally.  Optimizes image sizes for memory.
-    * `com.singly.android.util.JSON` - Utility method for quickly parsing JSON.  
+* `com.singly.android.component.AuthenticatedServicesActivity` - An Activity that presents a list of services that the user can authenticate against.  Interaction with the SinglyClient class for authentication is handled.
+* `com.singly.android.component.FriendsListActivity` - An Activity that provides a list of friends/contacts from all networks using the Singly /friends API.  Actions can be taken when the row of a friend is clicked.
+* `com.singly.android.util.RemoteImageCache` - A utility class for downloading and caching remote images locally.  Optimizes image sizes for memory.
+* `com.singly.android.util.JSON` - Utility method for quickly parsing JSON.  
 
 Each of the components has JavaDoc on different configuration options.  Components are configured by passing in information through the Intent that started it.
 
