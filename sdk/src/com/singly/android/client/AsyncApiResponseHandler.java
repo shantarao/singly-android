@@ -1,9 +1,13 @@
 package com.singly.android.client;
 
-public interface AsyncApiResponseHandler {
+public class AsyncApiResponseHandler {
 
-  public void onSuccess(String response);
-  
-  public void onFailure(Throwable error);
-  
+  public void onSuccess(String response) {
+
+  }
+
+  public void onFailure(Throwable error) {
+
+  }
+
 }
