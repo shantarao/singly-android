@@ -21,6 +21,28 @@ import com.singly.android.util.SinglyUtils;
 /**
  * A client that handles authentication and requests to the Singly API.
  * 
+ * The SinglyClient requires the following permissions and activities be defined
+ * in the AndroidManifest.xml file of the application.
+ * 
+ * <pre>
+ * // permissions needed  
+ * <uses-permission android:name="android.permission.INTERNET" />
+ * <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+ * <uses-permission android:name="android.permission.WRITE_INTERNAL_STORAGE" />
+ * 
+ * // activities needed
+ * <activity android:name="com.singly.android.client.AuthenticationActivity" />    
+ * <activity android:name="com.singly.android.client.FacebookAuthenticationActivity" />
+ * </pre>
+ * 
+ * The internet and network state permissions are used when calling Singly APIs
+ * and during authentication.  The internal storage permission is used when 
+ * saving shared preferences.
+ * 
+ * The AuthenticationActivity is used during authentication to various services.
+ * The FacebookAuthenticationActivity is used when doing native authentication
+ * if the user has the Facebook Android app installed.
+ * 
  * @see https://singly.com/docs/api
  */
 public class SinglyClient {
@@ -31,8 +53,14 @@ public class SinglyClient {
   private String clientSecret;
   private Class authenticationActivity = AuthenticationActivity.class;
 
+  // authentication information
   public static final String ACCESS_TOKEN = "accessToken";
   public static final String ACCOUNT = "account";
+  
+  // device owner information
+  public static final String OWNER_NAME = "ownerName";
+  public static final String OWNER_PHONE_NUMBER = "ownerPhoneNumber";
+  public static final String OWNER_EMAIL_ADDRESS = "ownerEmailAddress";
 
   /**
    * Class that holds Singly authentication including account and access token.

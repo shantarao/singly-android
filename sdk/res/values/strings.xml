@@ -1,3 +1,11 @@
 <resources>
   <string name="app_name">Singly Android SDK</string>
+  <string name="owner_name_label">Your Name:</string>
+  <string name="owner_phone_label">Your Phone Number:</string>
+  <string name="owner_email_label">Your Email Address:</string>
+  <string name="owner_message">Please enter your name, phone number and email to sync
+    phone contacts. This allows us to uniquely identify you and your device.
+  </string>
+  <string name="owner_submit">Save And Sync Contacts</string>
+  <string name="owner_cancel">Don\'t Sync</string>
 </resources>

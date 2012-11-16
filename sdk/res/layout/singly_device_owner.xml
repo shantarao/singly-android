@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+  android:id="@+id/ownerSubmitButton"
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:padding="10dp">
+
+  <TextView
+    android:id="@+id/ownerMessage"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:layout_alignParentLeft="true"
+    android:layout_alignParentTop="true"
+    android:paddingBottom="15dp"
+    android:text="@string/owner_message" />
+
+  <TextView
+    android:id="@+id/ownerNameLabel"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:layout_alignParentLeft="true"
+    android:layout_below="@+id/ownerMessage"
+    android:text="@string/owner_name_label" />
+  <EditText
+    android:id="@+id/ownerNameEdit"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:layout_alignParentLeft="true"
+    android:layout_below="@+id/ownerNameLabel"
+    android:ems="10"
+    android:inputType="textCapWords">
+    <requestFocus />
+  </EditText>
+
+  <TextView
+    android:id="@+id/ownerPhoneLabel"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:layout_alignParentLeft="true"
+    android:layout_below="@+id/ownerNameEdit"
+    android:text="@string/owner_phone_label" />
+  <EditText
+    android:id="@+id/ownerPhoneEdit"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:layout_alignParentLeft="true"
+    android:layout_below="@+id/ownerPhoneLabel"
+    android:ems="10"
+    android:inputType="phone" />
+
+  <TextView
+    android:id="@+id/ownerEmailLabel"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:layout_alignParentLeft="true"
+    android:layout_below="@+id/ownerPhoneEdit"
+    android:text="@string/owner_email_label" />
+  <EditText
+    android:id="@+id/ownerEmailEdit"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:layout_alignParentLeft="true"
+    android:layout_below="@+id/ownerEmailLabel"
+    android:ems="10"
+    android:inputType="textEmailAddress" />
+
+  <Button
+    android:id="@+id/ownerButtonSubmit"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignParentLeft="true"
+    android:layout_below="@+id/ownerEmailEdit"
+    android:layout_marginTop="15dp"
+    android:text="@string/owner_submit" />
+  
+  <Button
+    android:id="@+id/ownerButtonCancel"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginLeft="10dp"
+    android:layout_alignBaseline="@+id/ownerButtonSubmit"
+    android:layout_alignBottom="@+id/ownerButtonSubmit"
+    android:layout_toRightOf="@+id/ownerButtonSubmit"
+    android:text="@string/owner_cancel" />
+
+</RelativeLayout>

@@ -1,14 +1,23 @@
 package com.singly.android.component;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.JsonNode;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -20,6 +29,7 @@ import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.singly.android.client.AsyncApiResponseHandler;
 import com.singly.android.client.SinglyClient;
@@ -65,11 +75,29 @@ import com.singly.android.util.RemoteImageCache;
  *   <li>imageCacheSize - The number of images to cache in memory</li>
  *   <li>imageCacheDir - The image cache directory inside app data/files</li>
  *   <li>imagesInParallel - The max images to download in parallel.</li>
+ *   <li>syncContacts - True or false to sync phone contacts to the api.</li>
  * </ol>
  * 
  * To use the FriendsListActivity you will want to create a subclass of this
  * activity and override the {@link #onFriendClick(AdapterView, View, int)}
  * method to add specific handling for when a Friend row is clicked.
+ * 
+ * When using the FriendsListActivity the following two activites must be 
+ * registered in the AndroidManifest.xml file.
+ * 
+ * <pre>
+ * <activity android:name="com.singly.android.component.FriendsListActivity" />
+ * <activity android:name="com.singly.android.component.DeviceOwnerActivity" />
+ * </pre>
+ * 
+ * When syncing contacts, which is the default, the read contacts permission
+ * must be specified in the AndroidManifest.xml file.
+ * 
+ * <pre>
+ * <uses-permission android:name="android.permission.READ_CONTACTS" />
+ * </pre>
+ * 
+ * This allows reading from the contacts provider to get phone contacts to sync.
  */
 public class FriendsListActivity
   extends Activity {
@@ -92,6 +120,125 @@ public class FriendsListActivity
   protected int imageCacheSize = 200;
   protected int imagesInParallel = 2;
   protected String imageCacheDir = null;
+
+  /**
+   * Syncs the contacts from the user's phone to the /friends/android api.
+   */
+  private void syncContactsFromPhone() {
+
+    // prompt the user to enter a phone number as this seems to be the only
+    // reliable way to get the device information, also works on non-phones
+    // exit after, can't sync contacts unless we have owner info
+    SharedPreferences prefs = getSharedPreferences("singly",
+      Context.MODE_PRIVATE);
+    String ownerName = prefs.getString(SinglyClient.OWNER_NAME, null);
+    String ownerPhone = prefs.getString(SinglyClient.OWNER_PHONE_NUMBER, null);
+    String ownerEmail = prefs.getString(SinglyClient.OWNER_EMAIL_ADDRESS, null);
+    if (StringUtils.isBlank(ownerName) || StringUtils.isBlank(ownerPhone)
+      || StringUtils.isBlank(ownerEmail)) {
+      startActivityForResult(new Intent(this, DeviceOwnerActivity.class), 1);
+      return;
+    }
+
+    // contacts list to sync
+    List<Map<String, Object>> contacts = new ArrayList<Map<String, Object>>();
+
+    // add the owner to the contact list
+    Map<String, Object> owner = new LinkedHashMap<String, Object>();
+    owner.put("self", true);
+    owner.put("id", "00000");
+    owner.put("name", ownerName);
+    owner.put("phone", ownerPhone);
+    owner.put("email", ownerEmail);
+    contacts.add(owner);
+
+    // get the content resolver and query for all contacts
+    ContentResolver cr = getContentResolver();
+    Cursor contactCur = cr.query(ContactsContract.Contacts.CONTENT_URI, null,
+      null, null, null);
+
+    // loop through contacts if we have them
+    if (contactCur.getCount() > 0) {
+      while (contactCur.moveToNext()) {
+
+        Map<String, Object> contact = new LinkedHashMap<String, Object>();
+
+        // get the name and id of the contact
+        String id = contactCur.getString(contactCur
+          .getColumnIndex(ContactsContract.Contacts._ID));
+        String name = contactCur.getString(contactCur
+          .getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+
+        contact.put("id", StringUtils.leftPad(id, 5, "0"));
+        contact.put("name", name);
+
+        // if there are phone numbers then get all phone numbers for the contact
+        Cursor phoneCur = getContentResolver().query(
+          ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null,
+          ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = " + id, null,
+          null);
+        boolean hasPhone = phoneCur.getCount() > 0;
+        if (hasPhone) {
+          List<String> phoneNumbers = new ArrayList<String>();
+          while (phoneCur.moveToNext()) {
+            String phoneNumber = phoneCur.getString(phoneCur
+              .getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+            phoneNumbers.add(phoneNumber);
+          }
+          contact.put("phones", phoneNumbers);
+        }
+        phoneCur.close();
+
+        // if there are emails addresses then get all emails for the contact
+        Cursor emailCur = getContentResolver().query(
+          ContactsContract.CommonDataKinds.Email.CONTENT_URI, null,
+          ContactsContract.CommonDataKinds.Email.CONTACT_ID + " = " + id, null,
+          null);
+        boolean hasEmail = emailCur.getCount() > 0;
+        if (hasEmail) {
+          List<String> emailAddresses = new ArrayList<String>();
+          while (emailCur.moveToNext()) {
+            String emailAddress = emailCur.getString(emailCur
+              .getColumnIndex(ContactsContract.CommonDataKinds.Email.DATA));
+            emailAddresses.add(emailAddress);
+          }
+          contact.put("emails", emailAddresses);
+        }
+        emailCur.close();
+
+        // must have either phone or email to sync contact
+        if (hasPhone || hasEmail) {
+          contacts.add(contact);
+        }
+      }
+      contactCur.close();
+    }
+
+    // sync the contacts, post to /friends/android
+    Map<String, String> qparams = new HashMap<String, String>();
+    Authentication auth = singlyClient.getAuthentication(this);
+    if (StringUtils.isNotBlank(auth.accessToken)) {
+      qparams.put("access_token", auth.accessToken);
+    }
+    
+    String contactsJson = JSON.serializeToJson(contacts);
+    singlyClient.doBodyApiRequest(this, "/friends/android", qparams,
+      contactsJson.getBytes(), "application/json",
+      new AsyncApiResponseHandler() {
+
+        @Override
+        public void onSuccess(String response) {
+          Toast.makeText(FriendsListActivity.this, "Contacts synced",
+            Toast.LENGTH_SHORT).show();
+        }
+
+        @Override
+        public void onFailure(Throwable error) {
+          Toast.makeText(FriendsListActivity.this, "Error syncing contacts",
+            Toast.LENGTH_SHORT).show();
+        }
+      });
+  }
 
   /**
    * Displays the table of contents component if configured to do so.
@@ -179,6 +326,12 @@ public class FriendsListActivity
     }
     blocksToCache = intent.getIntExtra("blocksToCache", 50);
 
+    // sync contacts from phone if desired
+    boolean syncContacts = intent.getBooleanExtra("syncContacts", true);
+    if (syncContacts) {
+      syncContactsFromPhone();
+    }
+
     // create the friends list view
     friendsListView = (ListView)findViewById(R.id.friendsListView);
 
@@ -239,6 +392,16 @@ public class FriendsListActivity
   protected void onDestroy() {
     super.onDestroy();
     imageCache.shutdown();
+  }
+
+  @Override
+  public void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+    // returned from the DeviceOwnerActivity, try and sync the contacts
+    super.onActivityResult(requestCode, resultCode, data);
+    if (resultCode == 0) {
+      syncContactsFromPhone();
+    }
   }
 
   /**
