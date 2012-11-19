@@ -220,11 +220,12 @@ public class AuthenticationActivity
 
     // auth flow says account=false if we don't have an singly account stored
     Authentication auth = singlyClient.getAuthentication(context);
-    String account = auth.account;
-    qparams.put("account", StringUtils.isNotBlank(account) ? account : "false");
+    if (StringUtils.isNotBlank(auth.accessToken)) {
+      qparams.put("access_token",  auth.accessToken);
+    }
 
     // create the authentication url
-    String authUrl = SinglyUtils.createSinglyURL("/oauth/authorize", qparams);
+    String authUrl = SinglyUtils.createSinglyURL("/oauth/authenticate", qparams);
 
     // no window title
     requestWindowFeature(Window.FEATURE_NO_TITLE);
