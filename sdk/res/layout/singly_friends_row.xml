@@ -6,7 +6,7 @@
   android:orientation="vertical">
 
   <TextView
-    android:id="@+id/tableOfContentsSectionHeader"
+    android:id="@+id/singlyFriendsRowSectionHeader"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:paddingTop="5dp"
@@ -24,7 +24,7 @@
     android:minHeight="42dp">
 
     <ProgressBar
-      android:id="@+id/friendProgress"
+      android:id="@+id/singlyFriendsRowProgress"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
       android:layout_gravity="left|center_vertical"
@@ -34,7 +34,7 @@
       android:visibility="gone" />
 
     <ImageView
-      android:id="@+id/friendImage"
+      android:id="@+id/singlyFriendsRowImage"
       android:layout_width="42dp"
       android:layout_height="42dp"
       android:layout_gravity="left|center_vertical"
@@ -46,7 +46,7 @@
       android:visibility="gone" />
 
     <TextView
-      android:id="@+id/friendName"
+      android:id="@+id/singlyFriendsRowName"
       android:layout_width="0dp"
       android:layout_height="wrap_content"
       android:layout_gravity="left|center_vertical"

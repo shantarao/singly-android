@@ -23,8 +23,9 @@
     <activity android:name="com.singly.android.client.FacebookAuthenticationActivity" />
 
     <!-- Singly component shows authenticated services -->
-    <activity android:name="com.singly.android.component.AuthenticatedServicesActivity" />
-    
+    <activity android:name="com.singly.android.component.AuthenticatedServicesActivity" 
+        android:configChanges="orientation|screenLayout" />
+        
     <!-- Main activity for launching examples -->
     <activity
       android:name=".MainActivity"

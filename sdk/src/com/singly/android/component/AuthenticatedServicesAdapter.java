@@ -43,7 +43,7 @@ public class AuthenticatedServicesAdapter
     List<SinglyService> services, Set<String> authServices,
     RemoteImageCache imageCache) {
 
-    super(context, R.layout.singly_authenticated_services_row, services);
+    super(context, R.layout.singly_auth_services_row, services);
     this.services = services;
     this.authServices = authServices;
 
@@ -68,8 +68,8 @@ public class AuthenticatedServicesAdapter
     // only runs once per row
     if (serviceView == null) {
 
-      serviceView = inflater.inflate(
-        R.layout.singly_authenticated_services_row, parent, false);
+      serviceView = inflater.inflate(R.layout.singly_auth_services_row, parent,
+        false);
 
       TextView textView = (TextView)serviceView.findViewById(R.id.textView1);
       CheckBox checkBox = (CheckBox)serviceView.findViewById(R.id.checkBox1);
