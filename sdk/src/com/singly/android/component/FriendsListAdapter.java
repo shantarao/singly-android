@@ -1,6 +1,7 @@
 package com.singly.android.component;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -30,18 +31,23 @@ import com.singly.android.util.JSON;
 import com.singly.android.util.RemoteImageCache;
 
 /**
- * A {@link TableOfContentsListAdapter} implementation customized for use with
- * the Singly Friends API.
+ * A {@link AbstractCachingBlockLoadedListAdapter} implementation customized
+ * for use with the Singly Friends API.
  */
 public class FriendsListAdapter
-  extends TableOfContentsListAdapter<Friend> {
+  extends AbstractCachingBlockLoadedListAdapter<Friend> {
 
   private LayoutInflater inflater;
   private Context context;
   private SinglyClient singlyClient;
   private String accessToken;
-  private RemoteImageCache imageCache;
   private Bitmap defaultImage;
+  private Map<Integer, String> sectionPositions;
+
+  private boolean displaySectionHeaders = true;
+  private boolean displayImages = true;
+  private int defaultImageResource = R.drawable.friend_noimage;
+  private RemoteImageCache remoteImageCache;
 
   private static class ViewHolder {
     TextView sectionHeader;
@@ -58,7 +64,9 @@ public class FriendsListAdapter
     qparams.put("access_token", accessToken);
     qparams.put("offset", String.valueOf(offset));
     qparams.put("limit", String.valueOf(limit));
-    qparams.put("toc", "true");
+
+    // we only need the toc on the first call
+    qparams.put("toc", sectionPositions == null ? "true" : "false");
 
     // make a call to the api to get the block
     singlyClient.doGetApiRequest(context, "/friends/all", qparams,
@@ -68,31 +76,26 @@ public class FriendsListAdapter
         public void onSuccess(String response) {
 
           List<Friend> blockOfFriends = new ArrayList<Friend>();
-          boolean isFirstNode = true;
           JsonNode root = JSON.parse(response);
 
           for (JsonNode node : root) {
 
-            // parse and initialize the table of contents from first row
-            if (tableOfContents == null && tablePositions == null
-              && isFirstNode) {
+            if (sectionPositions == null) {
 
-              Map<String, Integer> tableOfContents = new HashMap<String, Integer>();
+              // create the section headers from the table of contents
+              sectionPositions = Collections
+                .synchronizedMap(new HashMap<Integer, String>());
               Map<String, JsonNode> tocFields = JSON.getFields(node);
               for (Map.Entry<String, JsonNode> tocField : tocFields.entrySet()) {
                 String tocKey = tocField.getKey();
                 JsonNode tocNode = tocField.getValue();
                 if (!StringUtils.equals(tocKey, "meta")) {
-                  tableOfContents.put(StringUtils.upperCase(tocKey),
-                    JSON.getInt(tocNode, "offset"));
+                  sectionPositions.put(JSON.getInt(tocNode, "offset"),
+                    StringUtils.upperCase(tocKey));
                 }
               }
-
-              initializeTableOfContents(tableOfContents);
             }
-
-            // beyond first node is friends, first node is toc
-            if (!isFirstNode) {
+            else {
 
               // parse the friend
               Friend friend = new Friend();
@@ -119,9 +122,6 @@ public class FriendsListAdapter
               // add friend to the block
               blockOfFriends.add(friend);
             }
-
-            // passed first node
-            isFirstNode = false;
           }
 
           // cache the block
@@ -145,23 +145,14 @@ public class FriendsListAdapter
    * is loaded into the cache.  This supports smooth reverse and forward scroll.
    * If the blockSize is low the blocksToPreload should be greater.
    * @param blocksToCache The number of blocks to keep in memory.
-   * @param imageCache The remote image cache used to download, store, and 
-   * cache friend images.  If null images will not be displayed.
    */
   public FriendsListAdapter(Context context, int rows, int blockSize,
-    int blocksToPreload, int blocksToCache, RemoteImageCache imageCache) {
+    int blocksToPreload, int blocksToCache) {
 
     super(rows, blockSize, blocksToPreload, blocksToCache);
     this.context = context;
     this.inflater = (LayoutInflater)context
       .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-
-    // image handling
-    if (imageCache != null) {
-      this.imageCache = imageCache;
-      this.defaultImage = BitmapFactory.decodeResource(context.getResources(),
-        R.drawable.friend_noimage);
-    }
 
     // get the singly client and access token
     this.singlyClient = SinglyClient.getInstance();
@@ -181,11 +172,13 @@ public class FriendsListAdapter
 
       row = inflater.inflate(R.layout.singly_friends_row, parent, false);
       TextView sectionHeader = (TextView)row
-        .findViewById(R.id.tableOfContentsSectionHeader);
-      TextView friendNameView = (TextView)row.findViewById(R.id.friendName);
+        .findViewById(R.id.singlyFriendsRowSectionHeader);
+      TextView friendNameView = (TextView)row
+        .findViewById(R.id.singlyFriendsRowName);
       ProgressBar friendProgressView = (ProgressBar)row
-        .findViewById(R.id.friendProgress);
-      ImageView friendImageView = (ImageView)row.findViewById(R.id.friendImage);
+        .findViewById(R.id.singlyFriendsRowProgress);
+      ImageView friendImageView = (ImageView)row
+        .findViewById(R.id.singlyFriendsRowImage);
 
       viewHolder = new ViewHolder();
       viewHolder.sectionHeader = sectionHeader;
@@ -199,11 +192,11 @@ public class FriendsListAdapter
       viewHolder = (ViewHolder)row.getTag();
     }
 
-    // set the section header if we have a toc and it is a toc section start
+    // set the section header if we have one
     viewHolder.sectionHeader.setVisibility(View.GONE);
-    if (isTableOfContentsHeader(position)) {
+    if (sectionPositions != null && sectionPositions.containsKey(position)) {
       viewHolder.sectionHeader.setVisibility(View.VISIBLE);
-      viewHolder.sectionHeader.setText(getTableOfContentsEntry(position));
+      viewHolder.sectionHeader.setText(sectionPositions.get(position));
     }
 
     // display the row or loading if the row isn't available yet
@@ -221,7 +214,13 @@ public class FriendsListAdapter
         viewHolder.name.setText(friendName);
       }
 
-      if (imageCache != null) {
+      if (displayImages && remoteImageCache != null) {
+
+        // populate the default image if needed
+        if (defaultImage == null) {
+          defaultImage = BitmapFactory.decodeResource(context.getResources(),
+            defaultImageResource);
+        }
 
         // make the image view visible
         viewHolder.image.setVisibility(View.VISIBLE);
@@ -263,7 +262,7 @@ public class FriendsListAdapter
             if (curPosition >= startRow && curPosition <= endRow) {
               View rowView = mainListView.getChildAt(curPosition - startRow);
               ImageView imageView = (ImageView)rowView
-                .findViewById(R.id.friendImage);
+                .findViewById(R.id.singlyFriendsRowImage);
               imageView.setImageBitmap(bitmap);
             }
           }
@@ -271,7 +270,7 @@ public class FriendsListAdapter
         };
 
         // get the friend image or the default
-        Bitmap friendImage = imageCache.getImage(imageInfo);
+        Bitmap friendImage = remoteImageCache.getImage(imageInfo);
         if (friendImage == null) {
           friendImage = defaultImage;
         }
@@ -286,6 +285,38 @@ public class FriendsListAdapter
     }
 
     return row;
+  }
+
+  public boolean isDisplaySectionHeaders() {
+    return displaySectionHeaders;
+  }
+
+  public void setDisplaySectionHeaders(boolean displaySectionHeaders) {
+    this.displaySectionHeaders = displaySectionHeaders;
+  }
+
+  public boolean isDisplayImages() {
+    return displayImages;
+  }
+
+  public void setDisplayImages(boolean displayImages) {
+    this.displayImages = displayImages;
+  }
+
+  public int getDefaultImageResource() {
+    return defaultImageResource;
+  }
+
+  public void setDefaultImageResource(int defaultImageResource) {
+    this.defaultImageResource = defaultImageResource;
+  }
+
+  public RemoteImageCache getRemoteImageCache() {
+    return remoteImageCache;
+  }
+
+  public void setRemoteImageCache(RemoteImageCache remoteImageCache) {
+    this.remoteImageCache = remoteImageCache;
   }
 
 }
