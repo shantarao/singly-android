@@ -128,7 +128,7 @@ Once a user has authenticated with a service you will be able to make api calls 
         // the response from the api, usually a JSON string, is passed in
       }
 
-      public void onFailure(Throwable error) {
+      public void onFailure(Throwable error, String message) {
         // error performing the api request
       }
     });

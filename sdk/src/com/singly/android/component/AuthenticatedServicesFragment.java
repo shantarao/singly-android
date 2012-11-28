@@ -150,20 +150,20 @@ public class AuthenticatedServicesFragment
             }
             else {
 
-              Map<String, String> qparams = new HashMap<String, String>();
+              Map<String, Object> postParams = new HashMap<String, Object>();
               String serviceUserId = serviceIds.get(serviceId);
-              qparams.put("delete", serviceUserId + "@" + serviceId);
+              postParams.put("delete", serviceUserId + "@" + serviceId);
 
               // add the client access token
               Authentication auth = singlyClient.getAuthentication(activity);
               if (StringUtils.isNotBlank(auth.accessToken)) {
-                qparams.put("access_token", auth.accessToken);
+                postParams.put("access_token", auth.accessToken);
               }
 
               // this calls a profile delete, success means the user is no
               // longer authenticated with the service
-              singlyClient.doPostApiRequest(activity, "/profiles", qparams,
-                new AsyncApiResponseHandler() {
+              singlyClient.doPostApiRequest(activity, "/profiles", null,
+                postParams, new AsyncApiResponseHandler() {
 
                   @Override
                   public void onSuccess(String response) {
@@ -179,7 +179,7 @@ public class AuthenticatedServicesFragment
                   }
 
                   @Override
-                  public void onFailure(Throwable error) {
+                  public void onFailure(Throwable error, String message) {
                     // nothing on failure, maybe we should show a dialog
                   }
                 });
@@ -259,7 +259,7 @@ public class AuthenticatedServicesFragment
         }
 
         @Override
-        public void onFailure(Throwable error) {
+        public void onFailure(Throwable error, String message) {
 
         }
       });
@@ -276,6 +276,7 @@ public class AuthenticatedServicesFragment
     Bundle savedInstanceState) {
 
     super.onCreateView(inflater, container, savedInstanceState);
+    setRetainInstance(true);
     authServicesLayout = (LinearLayout)inflater.inflate(
       R.layout.singly_auth_services_fragment, container, false);
 
@@ -400,7 +401,7 @@ public class AuthenticatedServicesFragment
         }
 
         @Override
-        public void onFailure(Throwable error) {
+        public void onFailure(Throwable error, String message) {
           Log.e(AuthenticatedServicesFragment.class.getSimpleName(),
             "Error getting list of authenticated services", error);
         }

@@ -129,7 +129,7 @@ public class FriendsListAdapter
         }
 
         @Override
-        public void onFailure(Throwable error) {
+        public void onFailure(Throwable error, String message) {
           error.printStackTrace();
         }
       });

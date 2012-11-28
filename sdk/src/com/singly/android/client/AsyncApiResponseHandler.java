@@ -6,7 +6,7 @@ public class AsyncApiResponseHandler {
 
   }
 
-  public void onFailure(Throwable error) {
+  public void onFailure(Throwable error, String message) {
 
   }
 
