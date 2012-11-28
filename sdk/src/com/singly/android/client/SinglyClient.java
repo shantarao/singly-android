@@ -1,5 +1,9 @@
 package com.singly.android.client;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -56,7 +60,7 @@ public class SinglyClient {
   // authentication information
   public static final String ACCESS_TOKEN = "accessToken";
   public static final String ACCOUNT = "account";
-  
+
   // device owner information
   public static final String OWNER_NAME = "ownerName";
   public static final String OWNER_PHONE_NUMBER = "ownerPhoneNumber";
@@ -72,7 +76,7 @@ public class SinglyClient {
 
   private SinglyClient() {
     this.clientId = "your_client_id";
-    this.clientSecret = "your_client_secret";
+    this.clientSecret = "you_client_secret";
   }
 
   /**
@@ -140,7 +144,7 @@ public class SinglyClient {
 
     // should we use native authenticaion where available
     if (useNativeAuth) {
-      
+
       // open facebook authentication if the service is authenticating against
       // is facebook and the facebook app is installed
       if (StringUtils.equals(service, "facebook")) {
@@ -225,8 +229,8 @@ public class SinglyClient {
       }
 
       @Override
-      public void onFailure(Throwable error) {
-        responseHandler.onFailure(error);
+      public void onFailure(Throwable error, String message) {
+        responseHandler.onFailure(error, message);
       }
     });
   }
@@ -245,40 +249,76 @@ public class SinglyClient {
    * If an API call requires an access token it must be added to the queryParams
    * passed into the method.
    * 
+   * The postParams can contain String, InputStream, byte[] and File values.
+   * Any request with InputStream, byte[] or File values will be posted as a
+   * multipart request.  Post params are sent in the body of the post request.
+   * If you wish to send parameters in the url of the request, instead of or
+   * along with the post body, they will need to be passed in queryParams.
+   * 
    * @param context The current android context.
    * @param apiEndpoint The Singly API endpoint to call.
-   * @param queryParams Any query parameters to send along with the request.
+   * @param queryParams Any parameters to send in the url of the request.
+   * @param postParams Any parameters to send in the post body of the request.
    * @param responseHandler An asynchronous callback handler for the request.
    * 
    * @see https://singly.com/docs/api For documentation on Singly api calls.
    * @see SinglyUtils#getAccessToken(Context)
    */
   public void doPostApiRequest(Context context, String apiEndpoint,
-    Map<String, String> queryParams,
+    Map<String, String> queryParams, Map<String, Object> postParams,
     final AsyncApiResponseHandler responseHandler) {
 
     // get the http client and add api url
     AsyncHttpClient client = new AsyncHttpClient();
-    Map<String, String> params = new LinkedHashMap<String, String>();
-    if (queryParams != null) {
-      params.putAll(queryParams);
+
+    // convert request parameters if needed
+    boolean hasPostParams = false;
+    RequestParams rparams = new RequestParams();
+    if (postParams != null && !postParams.isEmpty()) {
+      for (Map.Entry<String, Object> postParam : postParams.entrySet()) {
+        String key = postParam.getKey();
+        Object objValue = postParam.getValue();
+        if (objValue instanceof String) {
+          rparams.put(key, (String)objValue);
+          hasPostParams = true;
+        }
+        else if (objValue instanceof InputStream) {
+          rparams.put(key, (InputStream)objValue);
+          hasPostParams = true;
+        }
+        else if (objValue instanceof byte[]) {
+          rparams.put(key, new ByteArrayInputStream((byte[])objValue));
+          hasPostParams = true;
+        }
+        else if (objValue instanceof File) {
+          try {
+            rparams.put(key, (File)objValue);
+            hasPostParams = true;
+          }
+          catch (FileNotFoundException e) {
+            // do nothing, ignore and continue
+          }
+        }
+      }
     }
-    String postApiCallUrl = SinglyUtils.createSinglyURL(apiEndpoint);
-    RequestParams rparms = params.isEmpty() ? null : new RequestParams(params);
 
     // do an async post request
-    client.post(postApiCallUrl, rparms, new AsyncHttpResponseHandler() {
+    boolean hasQueryParams = queryParams != null && !queryParams.isEmpty();
+    String postApiCallUrl = SinglyUtils.createSinglyURL(apiEndpoint,
+      hasQueryParams ? queryParams : null);
+    client.post(postApiCallUrl, hasPostParams ? rparams : null,
+      new AsyncHttpResponseHandler() {
 
-      @Override
-      public void onSuccess(String response) {
-        responseHandler.onSuccess(response);
-      }
+        @Override
+        public void onSuccess(String response) {
+          responseHandler.onSuccess(response);
+        }
 
-      @Override
-      public void onFailure(Throwable error) {
-        responseHandler.onFailure(error);
-      }
-    });
+        @Override
+        public void onFailure(Throwable error, String message) {
+          responseHandler.onFailure(error, message);
+        }
+      });
   }
 
   /**
@@ -332,9 +372,10 @@ public class SinglyClient {
         }
 
         @Override
-        public void onFailure(Throwable error) {
-          responseHandler.onFailure(error);
+        public void onFailure(Throwable error, String message) {
+          responseHandler.onFailure(error, message);
         }
+
       });
   }
 

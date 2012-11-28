@@ -151,7 +151,7 @@ public class FriendsListFragment
         }
 
         @Override
-        public void onFailure(Throwable error) {
+        public void onFailure(Throwable error, String message) {
           Log.e(FriendsListFragment.class.getSimpleName(),
             "Error getting friends", error);
         }

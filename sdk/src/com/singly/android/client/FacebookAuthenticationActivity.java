@@ -116,7 +116,7 @@ public class FacebookAuthenticationActivity
           }
 
           @Override
-          public void onFailure(Throwable error) {
+          public void onFailure(Throwable error, String message) {
 
             // finish and dismiss the facebook auth activity
             FacebookAuthenticationActivity.this.setResult(RESULT_SINGLY_ERROR);
@@ -190,7 +190,7 @@ public class FacebookAuthenticationActivity
         }
 
         @Override
-        public void onFailure(Throwable error) {
+        public void onFailure(Throwable error, String message) {
 
           // finish and dismiss the facebook auth activity
           FacebookAuthenticationActivity.this.setResult(RESULT_NO_APPID);
