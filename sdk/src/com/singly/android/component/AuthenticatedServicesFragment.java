@@ -238,9 +238,10 @@ public class AuthenticatedServicesFragment
               // the JSON is an array with a singly node containing the profile
               if (profileArrayNode.isArray()) {
 
+                JsonNode profileNode = profileArrayNode.get(0);
+                
                 // check if the auth token for the profile is no longer valid
                 // if not valid ignore the service
-                JsonNode profileNode = profileArrayNode.get(0);
                 JsonNode errorNode = JSON.getJsonNode(profileNode, "error");
                 if (errorNode != null) {
                   continue;
