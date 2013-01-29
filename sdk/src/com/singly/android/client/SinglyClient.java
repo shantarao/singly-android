@@ -65,7 +65,7 @@ public class SinglyClient {
   public static final String OWNER_NAME = "ownerName";
   public static final String OWNER_PHONE_NUMBER = "ownerPhoneNumber";
   public static final String OWNER_EMAIL_ADDRESS = "ownerEmailAddress";
-
+  
   /**
    * Class that holds Singly authentication including account and access token.
    */
@@ -210,15 +210,13 @@ public class SinglyClient {
     final AsyncApiResponseHandler responseHandler) {
 
     // get the http client and add api url
-    AsyncHttpClient client = new AsyncHttpClient();
+    AsyncHttpClient client = SinglyUtils.getHttpClient();
     Map<String, String> params = new LinkedHashMap<String, String>();
     if (queryParams != null) {
       params.putAll(queryParams);
     }
     String getApiCallUrl = SinglyUtils.createSinglyURL(apiEndpoint);
     RequestParams rparms = params.isEmpty() ? null : new RequestParams(params);
-
-    System.out.println(getApiCallUrl);
 
     // do an async get request
     client.get(getApiCallUrl, rparms, new AsyncHttpResponseHandler() {
@@ -269,7 +267,7 @@ public class SinglyClient {
     final AsyncApiResponseHandler responseHandler) {
 
     // get the http client and add api url
-    AsyncHttpClient client = new AsyncHttpClient();
+    AsyncHttpClient client = SinglyUtils.getHttpClient();
 
     // convert request parameters if needed
     boolean hasPostParams = false;
@@ -355,7 +353,7 @@ public class SinglyClient {
     final AsyncApiResponseHandler responseHandler) {
 
     // get the http client and add api url
-    AsyncHttpClient client = new AsyncHttpClient();
+    AsyncHttpClient client = SinglyUtils.getHttpClient();
     Map<String, String> params = new LinkedHashMap<String, String>();
     if (queryParams != null) {
       params.putAll(queryParams);

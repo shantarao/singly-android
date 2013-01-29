@@ -3,6 +3,8 @@ package com.singly.android.util;
 import java.net.URISyntaxException;
 import java.util.Map;
 
+import com.loopj.android.http.AsyncHttpClient;
+
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -13,9 +15,18 @@ import android.net.NetworkInfo;
  * Utility methods for the Singly SDK.
  */
 public class SinglyUtils {
-
+  
+  public static String SDK = "android";
+  public static String SDK_VERSION = "1.1";
   private static final String SINGLY_SCHEME = "https";
   private static final String SINGLY_HOST = "api.singly.com";
+
+  public static AsyncHttpClient getHttpClient() {
+    AsyncHttpClient httpClient = new AsyncHttpClient();
+    httpClient.addHeader("X-Singly-SDK", SDK);
+    httpClient.addHeader("X-Singly-SDK-Version", SDK_VERSION);
+    return httpClient;
+  }
 
   public static String getSinglyScheme() {
     return SINGLY_SCHEME;

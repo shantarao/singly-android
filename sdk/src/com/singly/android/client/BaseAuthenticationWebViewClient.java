@@ -49,7 +49,7 @@ public abstract class BaseAuthenticationWebViewClient
       null);
 
     // make an async http call to get the access token
-    AsyncHttpClient client = new AsyncHttpClient();
+    AsyncHttpClient client = SinglyUtils.getHttpClient();
     client.post(accessTokenUrl, qparams, new AsyncHttpResponseHandler() {
 
       @Override
