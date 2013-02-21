@@ -11,6 +11,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
@@ -71,6 +72,7 @@ import com.singly.android.util.SinglyUtils;
 public class AuthenticationActivity
   extends Activity {
 
+  protected static final String TAG = AuthenticationActivity.class.getSimpleName();
   protected static final String SUCCESS_REDIRECT = "singly://success";
   
   // android OK result code is -1, so we use -50 and less
@@ -102,23 +104,9 @@ public class AuthenticationActivity
         Uri uri = Uri.parse(url);
         String authCode = uri.getQueryParameter("code");
 
+        // complete the authentication process
         completeAuthentication(context, authCode, clientId, clientSecret,
-          new AuthenticationWebViewListener() {
-
-            @Override
-            public void onFinish() {
-              // done with the authentication process, close this activity
-              AuthenticationActivity.this.finish();
-            }
-
-            @Override
-            public void onError(Throwable error) {
-
-              // page errored close this activity
-              AuthenticationActivity.this.setResult(RESULT_SINGLY_ERROR);
-              AuthenticationActivity.this.finish();
-            }
-          });
+          getAuthenticationWebViewListener());
 
         // we handled the url ourselves, don't load the page in the web view
         return true;
@@ -139,6 +127,8 @@ public class AuthenticationActivity
       progressDialog.dismiss();
 
       // page errored close this activity
+      String errMsg = failingUrl + ":" + errorCode + ":" + description;
+      Log.e(TAG, "Error during authentication: " + errMsg);
       AuthenticationActivity.this.setResult(RESULT_URL_ERROR);
       AuthenticationActivity.this.finish();
     }
@@ -178,6 +168,34 @@ public class AuthenticationActivity
    */
   protected WebChromeClient getWebChromeClient() {
     return new AuthenticationWebChromeClient();
+  }
+  
+  /**
+   * Returns a default AuthenticationWebViewListener implementation used by the
+   * {@link AuthenticationWebViewClient} class when completing authentication.
+   * 
+   * @return The AuthenticationWebViewListener used to complete authentication.
+   */
+  protected AuthenticationWebViewListener getAuthenticationWebViewListener() {
+    return new AuthenticationWebViewListener() {
+
+      @Override
+      public void onFinish() {
+        
+        // done with the authentication process, close this activity
+        Log.i(TAG, "Authentication complete");
+        AuthenticationActivity.this.finish();
+      }
+
+      @Override
+      public void onError(Throwable error, String response) {
+
+        // authentication errored close this activity
+        Log.e(TAG, "Error completing authentication: " + response, error);
+        AuthenticationActivity.this.setResult(RESULT_SINGLY_ERROR);
+        AuthenticationActivity.this.finish();
+      }
+    };
   }
 
   @Override

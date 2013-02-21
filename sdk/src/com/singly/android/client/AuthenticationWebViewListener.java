@@ -17,7 +17,8 @@ public interface AuthenticationWebViewListener {
    * process.
    * 
    * @param error The error that occurred.
+   * @param message The string error message.
    */
-  public void onError(Throwable error);
+  public void onError(Throwable error, String message);
 
 }

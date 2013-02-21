@@ -86,10 +86,10 @@ public abstract class BaseAuthenticationWebViewClient
       }
 
       @Override
-      public void onFailure(Throwable error) {
+      public void onFailure(Throwable error, String message) {
 
-        // error getting the access token
-        listener.onError(error);
+        // pass through the error and response
+        listener.onError(error, message);
       }
 
     });
