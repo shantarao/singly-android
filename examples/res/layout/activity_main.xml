@@ -37,4 +37,12 @@
     android:layout_below="@+id/friendsButton"
     android:text="@string/button_photos" />
 
+  <Button
+    android:id="@+id/clearButton"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:layout_alignLeft="@+id/photosButton"
+    android:layout_below="@+id/photosButton"
+    android:text="@string/button_clear" />
+
 </RelativeLayout>

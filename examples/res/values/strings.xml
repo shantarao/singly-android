@@ -8,5 +8,6 @@
   <string name="button_auth_services_limited">Limited Authenticated Services</string>
   <string name="button_friends">Friends List</string>
   <string name="button_photos">Post Photo to Facebook</string>
+  <string name="button_clear">Clear Singly State</string>
 
 </resources>
