@@ -18,6 +18,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.webkit.CookieManager;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -107,6 +108,27 @@ public class MainActivity
         intent.setAction(Intent.ACTION_GET_CONTENT);
         startActivityForResult(Intent.createChooser(intent, "Open gallery"),
           DEFAULT_GALLERY);
+      }
+    });
+    
+    // example showing clearing of state
+    Button clearButton = (Button)findViewById(R.id.clearButton);
+    clearButton.setOnClickListener(new OnClickListener() {
+
+      @Override
+      public void onClick(View v) {
+        
+        // removes all local singly state
+        SinglyClient.clearAccount(MainActivity.this);
+        
+        // remove any cached cookies, it is all or none for the app, and the
+        // removal of cookies should be done on a per app basis.  will force
+        // relogin to services
+        CookieManager cookieManager = CookieManager.getInstance();
+        cookieManager.removeAllCookie();
+        
+        Toast.makeText(MainActivity.this,
+          "Singly State Cleared", Toast.LENGTH_SHORT).show();        
       }
     });
 
